@@ -1,0 +1,451 @@
+import { useEffect, useState } from "react"
+import { VscEdit, VscTrash } from "react-icons/vsc"
+import { Route, Routes, useLocation, useNavigate } from "react-router-dom"
+import Navbar from "../components/navbar.jsx"
+import { PRODUCTS_STORAGE_KEY, STORE_PROFILE_STORAGE_KEY } from "../constants/storage-keys.js"
+import useLocalStorageState from "../hooks/use-local-storage-state.js"
+import UserProfile, {
+    AccountSettings,
+    LoginSettings,
+    ProfileOverview,
+} from "../components/user-profile.jsx"
+
+function isProductList(value) {
+    return (
+        Array.isArray(value) &&
+        value.every(
+            (product) =>
+                product !== null &&
+                typeof product === "object" &&
+                typeof product.id === "string" &&
+                typeof product.name === "string" &&
+                typeof product.description === "string" &&
+                typeof product.image === "string" &&
+                Number.isFinite(product.price),
+        )
+    )
+}
+
+function isStoreProfile(value) {
+    return (
+        value !== null &&
+        typeof value === "object" &&
+        !Array.isArray(value) &&
+        typeof value.businessName === "string" &&
+        typeof value.image === "string" &&
+        (value.whatsappNumber === undefined ||
+            typeof value.whatsappNumber === "string")
+    )
+}
+
+const initialForm = {
+    name: "",
+    description: "",
+    price: "",
+    image: "",
+}
+
+const currencyFormatter = new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+})
+
+function ProductCatalog({ products, onEdit, onDelete }) {
+    return (
+        <>
+            <header className="bg-blue-700 px-6 py-6 text-white shadow-md">
+                <div className="mx-auto max-w-6xl text-center">
+                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-200">
+                        Vitrine virtual
+                    </p>
+                    <h1 className="mt-2 text-3xl font-bold sm:text-4xl">
+                        Seus produtos
+                    </h1>
+                    <p className="mt-2 text-blue-100">
+                        Cadastre e organize os produtos da sua vitrine.
+                    </p>
+                </div>
+            </header>
+
+            <main className="mx-auto max-w-6xl px-6 py-8">
+                {products.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+                        <h2 className="text-xl font-semibold text-slate-800">
+                            Sua vitrine está vazia
+                        </h2>
+                        <p className="mt-2 text-slate-500">
+                            Use o botão + para cadastrar seu primeiro produto.
+                        </p>
+                    </div>
+                ) : (
+                    <section
+                        aria-label="Produtos cadastrados"
+                        className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                    >
+                        {products.map((product) => (
+                            <article
+                                key={product.id}
+                                className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200"
+                            >
+                                <img
+                                    src={product.image}
+                                    alt={product.name}
+                                    className="h-56 w-full object-cover"
+                                />
+                                <div className="p-5">
+                                    <h2 className="truncate text-center text-xl font-semibold text-slate-900">
+                                        {product.name}
+                                    </h2>
+                                    <p className="mt-2 min-h-12 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
+                                        {product.description}
+                                    </p>
+                                    <p className="mt-4 text-lg font-bold text-blue-700">
+                                        {currencyFormatter.format(product.price)}
+                                    </p>
+                                    <div className="mt-5 flex gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => onEdit(product)}
+                                            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-blue-200 px-4 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-50"
+                                        >
+                                            <VscEdit aria-hidden="true" />
+                                            Editar
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => onDelete(product.id)}
+                                            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50"
+                                        >
+                                            <VscTrash aria-hidden="true" />
+                                            Excluir
+                                        </button>
+                                    </div>
+                                </div>
+                            </article>
+                        ))}
+                    </section>
+                )}
+            </main>
+        </>
+    )
+}
+
+export default function Home() {
+    const navigate = useNavigate()
+    const location = useLocation()
+    const [products, setProducts, productsStorageError] = useLocalStorageState(
+        PRODUCTS_STORAGE_KEY,
+        [],
+        isProductList,
+    )
+    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [editingProductId, setEditingProductId] = useState(null)
+    const [form, setForm] = useState(initialForm)
+    const [imageError, setImageError] = useState("")
+    const [isLoadingImage, setIsLoadingImage] = useState(false)
+    const [storeProfile, setStoreProfile, profileStorageError] = useLocalStorageState(
+        STORE_PROFILE_STORAGE_KEY,
+        { businessName: "", image: "", whatsappNumber: "" },
+        isStoreProfile,
+    )
+    const [accountLogin, setAccountLogin] = useState("")
+
+    useEffect(() => {
+        if (!isModalOpen) return undefined
+
+        function closeOnEscape(event) {
+            if (event.key === "Escape") closeModal()
+        }
+
+        window.addEventListener("keydown", closeOnEscape)
+        return () => window.removeEventListener("keydown", closeOnEscape)
+    }, [isModalOpen])
+
+    function openAddModal() {
+        navigate("/home")
+        setEditingProductId(null)
+        setForm(initialForm)
+        setImageError("")
+        setIsLoadingImage(false)
+        setIsModalOpen(true)
+    }
+
+    function openEditModal(product) {
+        setEditingProductId(product.id)
+        setForm({
+            name: product.name,
+            description: product.description,
+            price: String(product.price),
+            image: product.image,
+        })
+        setImageError("")
+        setIsLoadingImage(false)
+        setIsModalOpen(true)
+    }
+
+    function closeModal() {
+        setIsModalOpen(false)
+        setEditingProductId(null)
+        setForm(initialForm)
+        setImageError("")
+        setIsLoadingImage(false)
+    }
+
+    function handleImageChange(event) {
+        const file = event.target.files?.[0]
+        setImageError("")
+
+        if (!file) return
+
+        if (!file.type.startsWith("image/")) {
+            setImageError("Selecione um arquivo de imagem válido.")
+            event.target.value = ""
+            return
+        }
+
+        const reader = new FileReader()
+        setIsLoadingImage(true)
+        setForm((currentForm) => ({ ...currentForm, image: "" }))
+        reader.onload = () => {
+            if (typeof reader.result === "string") {
+                setForm((currentForm) => ({ ...currentForm, image: reader.result }))
+            }
+            setIsLoadingImage(false)
+        }
+        reader.onerror = () => {
+            setImageError("Não foi possível carregar a imagem. Tente novamente.")
+            setIsLoadingImage(false)
+        }
+        reader.readAsDataURL(file)
+    }
+
+    function handleSubmit(event) {
+        event.preventDefault()
+
+        const product = {
+            ...form,
+            price: Number(form.price),
+        }
+
+        if (editingProductId) {
+            setProducts((currentProducts) =>
+                currentProducts.map((item) =>
+                    item.id === editingProductId ? { ...item, ...product } : item,
+                ),
+            )
+        } else {
+            setProducts((currentProducts) => [
+                ...currentProducts,
+                { id: crypto.randomUUID(), ...product },
+            ])
+        }
+
+        closeModal()
+    }
+
+    function handleDelete(productId) {
+        if (!window.confirm("Deseja realmente excluir este produto?")) return
+        setProducts((currentProducts) =>
+            currentProducts.filter((product) => product.id !== productId),
+        )
+    }
+
+    function handleProfileClick() {
+        if (location.pathname.startsWith("/home/profile")) {
+            navigate("/home")
+            return
+        }
+
+        closeModal()
+        navigate("/home/profile")
+    }
+
+    return (
+        <div className="min-h-screen bg-slate-100 pb-24">
+            <Routes>
+                <Route
+                    index
+                    element={
+                        <ProductCatalog
+                            products={products}
+                            onEdit={openEditModal}
+                            onDelete={handleDelete}
+                        />
+                    }
+                />
+                <Route path="profile" element={<UserProfile />}>
+                    <Route
+                        index
+                        element={<ProfileOverview profile={storeProfile} />}
+                    />
+                    <Route
+                        path="account"
+                        element={
+                            <AccountSettings
+                                profile={storeProfile}
+                                onSaveProfile={setStoreProfile}
+                            />
+                        }
+                    />
+                    <Route
+                        path="login"
+                        element={
+                            <LoginSettings
+                                login={accountLogin}
+                                onSaveLogin={setAccountLogin}
+                            />
+                        }
+                    />
+                </Route>
+            </Routes>
+            {(productsStorageError || profileStorageError) && (
+                <p
+                    role="alert"
+                    className="mx-auto mt-4 max-w-6xl rounded-lg bg-amber-50 p-4 text-amber-900"
+                >
+                    {productsStorageError || profileStorageError}
+                </p>
+            )}
+
+            {isModalOpen && (
+                <div
+                    className="fixed inset-0 z-20 flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4"
+                    onMouseDown={(event) => {
+                        if (event.target === event.currentTarget) closeModal()
+                    }}
+                >
+                    <section
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="product-modal-title"
+                        className="my-auto w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl sm:p-8"
+                    >
+                        <h2
+                            id="product-modal-title"
+                            className="text-center text-2xl font-bold text-slate-900"
+                        >
+                            {editingProductId ? "Editar produto" : "Adicionar produto"}
+                        </h2>
+                        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                            <div>
+                                <label
+                                    htmlFor="product-image"
+                                    className="mb-2 block text-sm font-medium text-slate-700"
+                                >
+                                    Foto do produto
+                                </label>
+                                <input
+                                    id="product-image"
+                                    type="file"
+                                    accept="image/*"
+                                    required={!form.image}
+                                    onChange={handleImageChange}
+                                    className="block w-full rounded-lg border border-slate-300 text-sm text-slate-600 file:mr-4 file:border-0 file:bg-blue-50 file:px-4 file:py-3 file:font-medium file:text-blue-700 hover:file:bg-blue-100"
+                                />
+                                {imageError && (
+                                    <p role="alert" className="mt-2 text-sm text-red-600">
+                                        {imageError}
+                                    </p>
+                                )}
+                                {form.image && (
+                                    <img
+                                        src={form.image}
+                                        alt="Pré-visualização do produto"
+                                        className="mt-4 h-48 w-full rounded-xl object-cover"
+                                    />
+                                )}
+                            </div>
+
+                            <div>
+                                <label
+                                    htmlFor="product-name"
+                                    className="mb-2 block text-sm font-medium text-slate-700"
+                                >
+                                    Nome do produto
+                                </label>
+                                <input
+                                    id="product-name"
+                                    type="text"
+                                    value={form.name}
+                                    onChange={(event) =>
+                                        setForm({ ...form, name: event.target.value })
+                                    }
+                                    placeholder="Ex.: Camiseta básica"
+                                    required
+                                    maxLength={80}
+                                    className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                />
+                            </div>
+
+                            <div>
+                                <label
+                                    htmlFor="product-description"
+                                    className="mb-2 block text-sm font-medium text-slate-700"
+                                >
+                                    Descrição
+                                </label>
+                                <textarea
+                                    id="product-description"
+                                    value={form.description}
+                                    onChange={(event) =>
+                                        setForm({ ...form, description: event.target.value })
+                                    }
+                                    placeholder="Descreva seu produto..."
+                                    required
+                                    rows={3}
+                                    maxLength={500}
+                                    className="w-full resize-y rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                />
+                            </div>
+
+                            <div>
+                                <label
+                                    htmlFor="product-price"
+                                    className="mb-2 block text-sm font-medium text-slate-700"
+                                >
+                                    Valor (R$)
+                                </label>
+                                <input
+                                    id="product-price"
+                                    type="number"
+                                    value={form.price}
+                                    onChange={(event) =>
+                                        setForm({ ...form, price: event.target.value })
+                                    }
+                                    placeholder="0,00"
+                                    min="0"
+                                    step="0.01"
+                                    required
+                                    className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                />
+                            </div>
+
+                            <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
+                                <button
+                                    type="button"
+                                    onClick={closeModal}
+                                    className="rounded-lg border border-slate-300 px-5 py-3 font-medium text-slate-700 transition hover:bg-slate-50"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={Boolean(imageError) || isLoadingImage}
+                                    className="rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {editingProductId ? "Salvar alterações" : "Cadastrar"}
+                                </button>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+            )}
+
+            <Navbar
+                add={openAddModal}
+                onProfileClick={handleProfileClick}
+                isProfileActive={location.pathname.startsWith("/home/profile")}
+            />
+        </div>
+    )
+}
