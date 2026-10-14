@@ -21,6 +21,8 @@ function isProductList(value) {
                 typeof product.name === "string" &&
                 typeof product.description === "string" &&
                 typeof product.image === "string" &&
+                (product.category === undefined ||
+                    typeof product.category === "string") &&
                 Number.isFinite(product.price),
         )
     )
@@ -41,6 +43,7 @@ function isStoreProfile(value) {
 const initialForm = {
     name: "",
     description: "",
+    category: "",
     price: "",
     image: "",
 }
@@ -96,6 +99,11 @@ function ProductCatalog({ products, onEdit, onDelete }) {
                                     <h2 className="truncate text-center text-xl font-semibold text-slate-900">
                                         {product.name}
                                     </h2>
+                                    {product.category && (
+                                        <p className="mt-1 text-sm font-medium text-blue-700">
+                                            {product.category}
+                                        </p>
+                                    )}
                                     <p className="mt-2 min-h-12 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
                                         {product.description}
                                     </p>
@@ -175,6 +183,7 @@ export default function Home() {
         setForm({
             name: product.name,
             description: product.description,
+            category: product.category || "",
             price: String(product.price),
             image: product.image,
         })
@@ -224,6 +233,7 @@ export default function Home() {
 
         const product = {
             ...form,
+            category: form.category.trim(),
             price: Number(form.price),
         }
 
@@ -373,6 +383,27 @@ export default function Home() {
                                     placeholder="Ex.: Camiseta básica"
                                     required
                                     maxLength={80}
+                                    className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                />
+                            </div>
+
+                            <div>
+                                <label
+                                    htmlFor="product-category"
+                                    className="mb-2 block text-sm font-medium text-slate-700"
+                                >
+                                    Categoria
+                                </label>
+                                <input
+                                    id="product-category"
+                                    type="text"
+                                    value={form.category}
+                                    onChange={(event) =>
+                                        setForm({ ...form, category: event.target.value })
+                                    }
+                                    placeholder="Ex.: Roupas, Acessórios"
+                                    required
+                                    maxLength={40}
                                     className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                                 />
                             </div>
