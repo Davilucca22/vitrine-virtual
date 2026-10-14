@@ -1,12 +1,13 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { VscAccount } from "react-icons/vsc"
-import { useAuth } from "../components/auth-context.js"
+import { useAutenticacao } from "../components/auth-context.js"
 
 const inputClassName =
     "w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
 
-function AuthLayout({ title, description, children }) {
+// Padroniza o layout das telas de login e cadastro.
+function LayoutDeAutenticacao({ title, description, children }) {
     return (
         <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10">
             <section className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
@@ -23,18 +24,20 @@ function AuthLayout({ title, description, children }) {
     )
 }
 
-export function Login() {
+// Permite que o lojista acesse a área de gerenciamento.
+export function TelaDeLogin() {
     const [error, setError] = useState("")
-    const { signIn } = useAuth()
+    const { entrar } = useAutenticacao()
     const navigate = useNavigate()
 
-    function handleSubmit(event) {
+    // Valida os dados do formulário e inicia a sessão de demonstração.
+    function tratarEnvioDoFormulario(event) {
         event.preventDefault()
         setError("")
 
         const formData = new FormData(event.currentTarget)
         try {
-            signIn(formData.get("email"))
+            entrar(formData.get("email"))
             navigate("/home", { replace: true })
         } catch (submitError) {
             setError(submitError.message)
@@ -42,11 +45,11 @@ export function Login() {
     }
 
     return (
-        <AuthLayout
+        <LayoutDeAutenticacao
             title="Entrar"
             description="Acesse sua conta para gerenciar a loja."
         >
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={tratarEnvioDoFormulario} className="space-y-5">
                 <div>
                     <label
                         htmlFor="login-email"
@@ -112,17 +115,19 @@ export function Login() {
             >
                 Voltar à vitrine
             </Link>
-        </AuthLayout>
+        </LayoutDeAutenticacao>
     )
 }
 
-export function Register() {
+// Apresenta o cadastro de demonstração da loja.
+export function TelaDeCadastro() {
     const [photoPreview, setPhotoPreview] = useState("")
     const [error, setError] = useState("")
-    const { signIn } = useAuth()
+    const { entrar } = useAutenticacao()
     const navigate = useNavigate()
 
-    function handlePhotoChange(event) {
+    // Valida a imagem selecionada e gera uma pré-visualização local.
+    function tratarAlteracaoDaFoto(event) {
         const file = event.target.files?.[0]
         setError("")
 
@@ -148,7 +153,8 @@ export function Register() {
         reader.readAsDataURL(file)
     }
 
-    function handleSubmit(event) {
+    // Confere a senha antes de iniciar a sessão de demonstração.
+    function tratarEnvioDoFormulario(event) {
         event.preventDefault()
         setError("")
 
@@ -162,7 +168,7 @@ export function Register() {
         }
 
         try {
-            signIn(formData.get("email"))
+            entrar(formData.get("email"))
             navigate("/home", { replace: true })
         } catch (submitError) {
             setError(submitError.message)
@@ -170,11 +176,11 @@ export function Register() {
     }
 
     return (
-        <AuthLayout
+        <LayoutDeAutenticacao
             title="Criar conta"
             description="Cadastre os dados da sua loja para começar."
         >
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={tratarEnvioDoFormulario} className="space-y-4">
                 <div>
                     <label
                         htmlFor="register-business-name"
@@ -221,7 +227,7 @@ export function Register() {
                             name="photo"
                             type="file"
                             accept="image/*"
-                            onChange={handlePhotoChange}
+                            onChange={tratarAlteracaoDaFoto}
                             className="block w-full rounded-lg border border-slate-300 text-sm text-slate-600 file:mr-4 file:border-0 file:bg-blue-50 file:px-4 file:py-3 file:font-medium file:text-blue-700 hover:file:bg-blue-100"
                         />
                     </div>
@@ -334,6 +340,6 @@ export function Register() {
             >
                 Voltar à vitrine
             </Link>
-        </AuthLayout>
+        </LayoutDeAutenticacao>
     )
 }

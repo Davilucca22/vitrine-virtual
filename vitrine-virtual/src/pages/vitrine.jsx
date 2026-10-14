@@ -1,14 +1,15 @@
 import { useState } from "react"
 import { VscAccount, VscCallOutgoing } from "react-icons/vsc"
 import { PRODUCTS_STORAGE_KEY, STORE_PROFILE_STORAGE_KEY } from "../constants/storage-keys.js"
-import useLocalStorageState from "../hooks/use-local-storage-state.js"
+import useEstadoNoArmazenamentoLocal from "../hooks/use-local-storage-state.js"
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
 })
 
-function isProductList(value) {
+// Garante que os produtos salvos tenham os campos usados pela vitrine.
+function validarListaDeProdutos(value) {
     return (
         Array.isArray(value) &&
         value.every(
@@ -26,7 +27,8 @@ function isProductList(value) {
     )
 }
 
-function isStoreProfile(value) {
+// Mantém o perfil salvo compatível com os dados exibidos e usados no pedido.
+function validarPerfilDaLoja(value) {
     return (
         value !== null &&
         typeof value === "object" &&
@@ -38,7 +40,8 @@ function isStoreProfile(value) {
     )
 }
 
-function createWhatsappLink(phoneNumber, cartItems, total, businessName) {
+// Monta o link do WhatsApp com o resumo e o valor total do carrinho.
+function criarLinkDoWhatsApp(phoneNumber, cartItems, total, businessName) {
     const phone = String(phoneNumber || "").replace(/\D/g, "")
     const items = cartItems
         .map(
@@ -52,16 +55,17 @@ function createWhatsappLink(phoneNumber, cartItems, total, businessName) {
     return `https://wa.me${recipient}?text=${encodeURIComponent(message)}`
 }
 
+// Apresenta os produtos, filtros por categoria e carrinho de compras.
 export default function Vitrine() {
-    const [products, , productsStorageError] = useLocalStorageState(
+    const [products, , productsStorageError] = useEstadoNoArmazenamentoLocal(
         PRODUCTS_STORAGE_KEY,
         [],
-        isProductList,
+        validarListaDeProdutos,
     )
-    const [profile, , profileStorageError] = useLocalStorageState(
+    const [profile, , profileStorageError] = useEstadoNoArmazenamentoLocal(
         STORE_PROFILE_STORAGE_KEY,
         { businessName: "", image: "", whatsappNumber: "" },
-        isStoreProfile,
+        validarPerfilDaLoja,
     )
     const [cart, setCart] = useState({})
     const [isCartExpanded, setIsCartExpanded] = useState(false)
@@ -90,7 +94,8 @@ export default function Vitrine() {
         0,
     )
 
-    function updateCart(productId, quantity) {
+    // Atualiza a quantidade do produto ou o remove quando ela chega a zero.
+    function atualizarCarrinho(productId, quantity) {
         setCart((currentCart) => {
             const nextCart = { ...currentCart }
             if (quantity < 1) {
@@ -207,7 +212,7 @@ export default function Vitrine() {
                                                     </p>
                                                     <button
                                                         type="button"
-                                                        onClick={() => updateCart(product.id, 0)}
+                                                        onClick={() => atualizarCarrinho(product.id, 0)}
                                                         className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-600"
                                                         aria-label={`Remover ${product.name} do carrinho`}
                                                     >
@@ -237,7 +242,7 @@ export default function Vitrine() {
                                                                     Number.isInteger(nextQuantity) &&
                                                                     nextQuantity > 0
                                                                 ) {
-                                                                    updateCart(
+                                                                    atualizarCarrinho(
                                                                         product.id,
                                                                         nextQuantity,
                                                                     )
@@ -262,7 +267,7 @@ export default function Vitrine() {
                                         ))}
                                     </ul>
                                     <a
-                                        href={createWhatsappLink(
+                                        href={criarLinkDoWhatsApp(
                                             profile.whatsappNumber || "",
                                             cartItems,
                                             cartTotal,
@@ -331,7 +336,7 @@ export default function Vitrine() {
                                     <button
                                         type="button"
                                         onClick={() =>
-                                            updateCart(
+                                            atualizarCarrinho(
                                                 product.id,
                                                 (cart[product.id] || 0) + 1,
                                             )

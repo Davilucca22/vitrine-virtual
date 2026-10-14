@@ -3,7 +3,8 @@ import { AuthContext } from "./auth-context.js"
 
 const AUTH_SESSION_KEY = "vitrine-virtual:demo-session"
 
-function getInitialUser() {
+// Restaura o usuário da sessão atual, se houver um email salvo.
+function obterUsuarioInicial() {
     try {
         const email = window.sessionStorage.getItem(AUTH_SESSION_KEY)
         return email ? { email } : null
@@ -12,10 +13,12 @@ function getInitialUser() {
     }
 }
 
-export default function AuthProvider({ children }) {
-    const [user, setUser] = useState(getInitialUser)
+// Disponibiliza o estado de autenticação para as rotas e páginas.
+export default function ProvedorDeAutenticacao({ children }) {
+    const [user, setUser] = useState(obterUsuarioInicial)
 
-    function signIn(email) {
+    // Valida e registra o email na sessão de demonstração.
+    function entrar(email) {
         const normalizedEmail = email.trim().toLowerCase()
         if (!normalizedEmail) {
             throw new Error("Informe um email válido para continuar.")
@@ -30,7 +33,8 @@ export default function AuthProvider({ children }) {
         setUser({ email: normalizedEmail })
     }
 
-    function signOut() {
+    // Encerra a sessão de demonstração e limpa o usuário atual.
+    function sair() {
         try {
             window.sessionStorage.removeItem(AUTH_SESSION_KEY)
         } catch {
@@ -41,7 +45,7 @@ export default function AuthProvider({ children }) {
     }
 
     return (
-        <AuthContext.Provider value={{ user, signIn, signOut }}>
+        <AuthContext.Provider value={{ user, entrar, sair }}>
             {children}
         </AuthContext.Provider>
     )

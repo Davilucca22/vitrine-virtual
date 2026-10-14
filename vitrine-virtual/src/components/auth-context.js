@@ -2,10 +2,11 @@ import { createContext, useContext } from "react"
 
 export const AuthContext = createContext(null)
 
-export function useAuth() {
+// Recupera a autenticação atual e alerta quando o provedor não está montado.
+export function useAutenticacao() {
     const context = useContext(AuthContext)
     if (!context) {
-        throw new Error("useAuth deve ser usado dentro de AuthProvider.")
+        throw new Error("useAutenticacao deve ser usado dentro de ProvedorDeAutenticacao.")
     }
 
     return context

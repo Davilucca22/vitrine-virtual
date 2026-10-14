@@ -1,10 +1,8 @@
-import App_router from "./router.jsx"
+import ConfigurarRotas from "./router.jsx"
 
-function App() {
-
-  return (
-    <App_router/>
-  )
+// Renderiza a aplicação dentro da árvore de rotas.
+function Aplicacao() {
+    return <ConfigurarRotas />
 }
 
-export default App
+export default Aplicacao

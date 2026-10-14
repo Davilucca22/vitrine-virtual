@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react"
 import { VscEdit, VscTrash } from "react-icons/vsc"
 import { Route, Routes, useLocation, useNavigate } from "react-router-dom"
-import Navbar from "../components/navbar.jsx"
+import BarraDeNavegacao from "../components/navbar.jsx"
 import { PRODUCTS_STORAGE_KEY, STORE_PROFILE_STORAGE_KEY } from "../constants/storage-keys.js"
-import useLocalStorageState from "../hooks/use-local-storage-state.js"
-import UserProfile, {
-    AccountSettings,
-    LoginSettings,
-    ProfileOverview,
+import useEstadoNoArmazenamentoLocal from "../hooks/use-local-storage-state.js"
+import PerfilDaLoja, {
+    ConfiguracoesDaConta,
+    ConfiguracoesDeAcesso,
+    VisaoGeralDoPerfil,
 } from "../components/user-profile.jsx"
 
-function isProductList(value) {
+// Verifica os campos necessários para exibir e editar cada produto.
+function validarListaDeProdutos(value) {
     return (
         Array.isArray(value) &&
         value.every(
@@ -28,7 +29,8 @@ function isProductList(value) {
     )
 }
 
-function isStoreProfile(value) {
+// Confere se os dados salvos do comércio podem ser usados com segurança.
+function validarPerfilDaLoja(value) {
     return (
         value !== null &&
         typeof value === "object" &&
@@ -53,7 +55,8 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
     currency: "BRL",
 })
 
-function ProductCatalog({ products, onEdit, onDelete }) {
+// Exibe os produtos cadastrados e oferece ações de edição e exclusão.
+function CatalogoDeProdutos({ products, aoEditar, aoExcluir }) {
     return (
         <>
             <header className="bg-blue-700 px-6 py-6 text-white shadow-md">
@@ -113,7 +116,7 @@ function ProductCatalog({ products, onEdit, onDelete }) {
                                     <div className="mt-5 flex gap-3">
                                         <button
                                             type="button"
-                                            onClick={() => onEdit(product)}
+                                            onClick={() => aoEditar(product)}
                                             className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-blue-200 px-4 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-50"
                                         >
                                             <VscEdit aria-hidden="true" />
@@ -121,7 +124,7 @@ function ProductCatalog({ products, onEdit, onDelete }) {
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => onDelete(product.id)}
+                                            onClick={() => aoExcluir(product.id)}
                                             className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50"
                                         >
                                             <VscTrash aria-hidden="true" />
@@ -138,38 +141,41 @@ function ProductCatalog({ products, onEdit, onDelete }) {
     )
 }
 
-export default function Home() {
+// Coordena o catálogo, formulários e configurações da área administrativa.
+export default function Inicio() {
     const navigate = useNavigate()
     const location = useLocation()
-    const [products, setProducts, productsStorageError] = useLocalStorageState(
+    const [products, setProducts, productsStorageError] = useEstadoNoArmazenamentoLocal(
         PRODUCTS_STORAGE_KEY,
         [],
-        isProductList,
+        validarListaDeProdutos,
     )
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingProductId, setEditingProductId] = useState(null)
     const [form, setForm] = useState(initialForm)
     const [imageError, setImageError] = useState("")
     const [isLoadingImage, setIsLoadingImage] = useState(false)
-    const [storeProfile, setStoreProfile, profileStorageError] = useLocalStorageState(
+    const [storeProfile, setStoreProfile, profileStorageError] = useEstadoNoArmazenamentoLocal(
         STORE_PROFILE_STORAGE_KEY,
         { businessName: "", image: "", whatsappNumber: "" },
-        isStoreProfile,
+        validarPerfilDaLoja,
     )
     const [accountLogin, setAccountLogin] = useState("")
 
     useEffect(() => {
         if (!isModalOpen) return undefined
 
-        function closeOnEscape(event) {
-            if (event.key === "Escape") closeModal()
+        // Fecha o formulário quando o usuário pressiona Escape.
+        function fecharComEsc(event) {
+            if (event.key === "Escape") fecharModal()
         }
 
-        window.addEventListener("keydown", closeOnEscape)
-        return () => window.removeEventListener("keydown", closeOnEscape)
+        window.addEventListener("keydown", fecharComEsc)
+        return () => window.removeEventListener("keydown", fecharComEsc)
     }, [isModalOpen])
 
-    function openAddModal() {
+    // Prepara o formulário vazio para cadastrar um produto.
+    function abrirModalDeCadastro() {
         navigate("/home")
         setEditingProductId(null)
         setForm(initialForm)
@@ -178,7 +184,8 @@ export default function Home() {
         setIsModalOpen(true)
     }
 
-    function openEditModal(product) {
+    // Preenche o formulário com os dados do produto selecionado.
+    function abrirModalDeEdicao(product) {
         setEditingProductId(product.id)
         setForm({
             name: product.name,
@@ -192,7 +199,8 @@ export default function Home() {
         setIsModalOpen(true)
     }
 
-    function closeModal() {
+    // Fecha o formulário e limpa os dados temporários da edição.
+    function fecharModal() {
         setIsModalOpen(false)
         setEditingProductId(null)
         setForm(initialForm)
@@ -200,7 +208,8 @@ export default function Home() {
         setIsLoadingImage(false)
     }
 
-    function handleImageChange(event) {
+    // Valida o arquivo e carrega a imagem para o formulário.
+    function tratarAlteracaoDaImagem(event) {
         const file = event.target.files?.[0]
         setImageError("")
 
@@ -228,7 +237,8 @@ export default function Home() {
         reader.readAsDataURL(file)
     }
 
-    function handleSubmit(event) {
+    // Cria ou atualiza o produto usando os valores validados do formulário.
+    function tratarEnvioDoFormulario(event) {
         event.preventDefault()
 
         const product = {
@@ -250,23 +260,25 @@ export default function Home() {
             ])
         }
 
-        closeModal()
+        fecharModal()
     }
 
-    function handleDelete(productId) {
+    // Confirma a exclusão antes de remover o produto do armazenamento.
+    function excluirProduto(productId) {
         if (!window.confirm("Deseja realmente excluir este produto?")) return
         setProducts((currentProducts) =>
             currentProducts.filter((product) => product.id !== productId),
         )
     }
 
-    function handleProfileClick() {
+    // Alterna entre o catálogo de produtos e as configurações do perfil.
+    function tratarCliqueNoPerfil() {
         if (location.pathname.startsWith("/home/profile")) {
             navigate("/home")
             return
         }
 
-        closeModal()
+        fecharModal()
         navigate("/home/profile")
     }
 
@@ -276,33 +288,33 @@ export default function Home() {
                 <Route
                     index
                     element={
-                        <ProductCatalog
+                        <CatalogoDeProdutos
                             products={products}
-                            onEdit={openEditModal}
-                            onDelete={handleDelete}
+                            aoEditar={abrirModalDeEdicao}
+                            aoExcluir={excluirProduto}
                         />
                     }
                 />
-                <Route path="profile" element={<UserProfile />}>
+                <Route path="profile" element={<PerfilDaLoja />}>
                     <Route
                         index
-                        element={<ProfileOverview profile={storeProfile} />}
+                        element={<VisaoGeralDoPerfil profile={storeProfile} />}
                     />
                     <Route
                         path="account"
                         element={
-                            <AccountSettings
+                            <ConfiguracoesDaConta
                                 profile={storeProfile}
-                                onSaveProfile={setStoreProfile}
+                                aoSalvarPerfil={setStoreProfile}
                             />
                         }
                     />
                     <Route
                         path="login"
                         element={
-                            <LoginSettings
+                            <ConfiguracoesDeAcesso
                                 login={accountLogin}
-                                onSaveLogin={setAccountLogin}
+                                aoSalvarLogin={setAccountLogin}
                             />
                         }
                     />
@@ -321,7 +333,7 @@ export default function Home() {
                 <div
                     className="fixed inset-0 z-20 flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4"
                     onMouseDown={(event) => {
-                        if (event.target === event.currentTarget) closeModal()
+                        if (event.target === event.currentTarget) fecharModal()
                     }}
                 >
                     <section
@@ -336,7 +348,7 @@ export default function Home() {
                         >
                             {editingProductId ? "Editar produto" : "Adicionar produto"}
                         </h2>
-                        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                        <form onSubmit={tratarEnvioDoFormulario} className="mt-6 space-y-4">
                             <div>
                                 <label
                                     htmlFor="product-image"
@@ -349,7 +361,7 @@ export default function Home() {
                                     type="file"
                                     accept="image/*"
                                     required={!form.image}
-                                    onChange={handleImageChange}
+                                    onChange={tratarAlteracaoDaImagem}
                                     className="block w-full rounded-lg border border-slate-300 text-sm text-slate-600 file:mr-4 file:border-0 file:bg-blue-50 file:px-4 file:py-3 file:font-medium file:text-blue-700 hover:file:bg-blue-100"
                                 />
                                 {imageError && (
@@ -454,7 +466,7 @@ export default function Home() {
                             <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
                                 <button
                                     type="button"
-                                    onClick={closeModal}
+                                    onClick={fecharModal}
                                     className="rounded-lg border border-slate-300 px-5 py-3 font-medium text-slate-700 transition hover:bg-slate-50"
                                 >
                                     Cancelar
@@ -472,10 +484,10 @@ export default function Home() {
                 </div>
             )}
 
-            <Navbar
-                add={openAddModal}
-                onProfileClick={handleProfileClick}
-                isProfileActive={location.pathname.startsWith("/home/profile")}
+            <BarraDeNavegacao
+                aoAdicionar={abrirModalDeCadastro}
+                aoClicarNoPerfil={tratarCliqueNoPerfil}
+                perfilAtivo={location.pathname.startsWith("/home/profile")}
             />
         </div>
     )

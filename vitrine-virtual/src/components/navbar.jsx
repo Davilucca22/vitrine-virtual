@@ -1,6 +1,11 @@
 import { VscAccount, VscAddCompact } from "react-icons/vsc"
 
-export default function Navbar({ add, onProfileClick, isProfileActive }) {
+// Exibe a navegação fixa para cadastrar produtos e abrir o perfil.
+export default function BarraDeNavegacao({
+    aoAdicionar,
+    aoClicarNoPerfil,
+    perfilAtivo,
+}) {
     return (
         <nav
             aria-label="Navegação principal"
@@ -8,7 +13,7 @@ export default function Navbar({ add, onProfileClick, isProfileActive }) {
         >
             <button
                 type="button"
-                onClick={add}
+                onClick={aoAdicionar}
                 aria-label="Adicionar produto"
                 className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-md transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700"
             >
@@ -16,9 +21,9 @@ export default function Navbar({ add, onProfileClick, isProfileActive }) {
             </button>
             <button
                 type="button"
-                onClick={onProfileClick}
-                aria-label={isProfileActive ? "Voltar para produtos" : "Minha conta"}
-                aria-pressed={isProfileActive}
+                onClick={aoClicarNoPerfil}
+                aria-label={perfilAtivo ? "Voltar para produtos" : "Minha conta"}
+                aria-pressed={perfilAtivo}
                 className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-md transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700"
             >
                 <VscAccount aria-hidden="true" className="text-xl text-blue-700" />

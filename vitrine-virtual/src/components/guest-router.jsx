@@ -1,8 +1,9 @@
 import { Navigate, Outlet } from "react-router-dom"
-import { useAuth } from "./auth-context.js"
+import { useAutenticacao } from "./auth-context.js"
 
-export default function GuestRouter() {
-    const { user } = useAuth()
+// Impede que usuários autenticados voltem às páginas públicas de acesso.
+export default function RotaDeVisitante() {
+    const { user } = useAutenticacao()
 
     return user ? <Navigate to="/home" replace /> : <Outlet />
 }

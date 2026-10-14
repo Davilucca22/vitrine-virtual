@@ -2,47 +2,50 @@ import { useSyncExternalStore } from "react"
 
 const stores = new Map()
 
-function createStore(key, initialValue, isValid) {
+// Cria um armazenamento compartilhado e sincronizado com o localStorage.
+function criarArmazenamento(chave, valorInicial, validar) {
     let snapshot
 
     try {
-        const storedValue = window.localStorage.getItem(key)
-        if (storedValue === null) {
-            snapshot = { value: initialValue, error: "" }
+        const valorSalvo = window.localStorage.getItem(chave)
+        if (valorSalvo === null) {
+            snapshot = { value: valorInicial, error: "" }
         } else {
-            const value = JSON.parse(storedValue)
-            snapshot = isValid(value)
-                ? { value, error: "" }
+            const valor = JSON.parse(valorSalvo)
+            snapshot = validar(valor)
+                ? { value: valor, error: "" }
                 : {
-                      value: initialValue,
+                      value: valorInicial,
                       error: "Os dados salvos neste navegador estão inválidos.",
                   }
         }
     } catch {
         snapshot = {
-            value: initialValue,
+            value: valorInicial,
             error: "Não foi possível ler os dados salvos neste navegador.",
         }
     }
 
     const listeners = new Set()
 
-    function notify() {
+    // Atualiza todos os componentes inscritos neste armazenamento.
+    function notificarAssinantes() {
         listeners.forEach((listener) => listener())
     }
 
-    function handleStorage(event) {
-        if (event.key !== key && event.key !== null) return
+    // Sincroniza a página quando outra aba altera a mesma chave.
+    function tratarEventoDeArmazenamento(event) {
+        if (event.key !== chave && event.key !== null) return
 
         try {
             if (event.newValue === null) {
-                snapshot = { value: initialValue, error: "" }
+                snapshot = { value: valorInicial, error: "" }
             } else {
-                const value = JSON.parse(event.newValue)
-                snapshot = isValid(value)
-                    ? { value, error: "" }
+                const valor = JSON.parse(event.newValue)
+                snapshot = validar(valor)
+                    ? { value: valor, error: "" }
                     : {
-                          value: initialValue,
+                          value: valorInicial,
                           error: "Os dados salvos neste navegador estão inválidos.",
                       }
             }
@@ -52,30 +55,33 @@ function createStore(key, initialValue, isValid) {
                 error: "Não foi possível ler os dados salvos neste navegador.",
             }
         }
-        notify()
+        notificarAssinantes()
     }
 
     return {
-        getSnapshot: () => snapshot,
-        subscribe(listener) {
+        // Fornece ao React a versão atual do estado salvo.
+        obterSnapshot: () => snapshot,
+        // Inscreve o componente e remove o ouvinte quando ele desmonta.
+        inscrever(listener) {
             listeners.add(listener)
-            window.addEventListener("storage", handleStorage)
+            window.addEventListener("storage", tratarEventoDeArmazenamento)
 
             return () => {
                 listeners.delete(listener)
                 if (listeners.size === 0) {
-                    window.removeEventListener("storage", handleStorage)
+                    window.removeEventListener("storage", tratarEventoDeArmazenamento)
                 }
             }
         },
-        setValue(nextValue) {
+        // Persiste um valor novo e notifica quem está inscrito.
+        definirValor(proximoValor) {
             const value =
-                typeof nextValue === "function"
-                    ? nextValue(snapshot.value)
-                    : nextValue
+                typeof proximoValor === "function"
+                    ? proximoValor(snapshot.value)
+                    : proximoValor
 
             try {
-                window.localStorage.setItem(key, JSON.stringify(value))
+                window.localStorage.setItem(chave, JSON.stringify(value))
                 snapshot = { value, error: "" }
             } catch {
                 snapshot = {
@@ -84,22 +90,23 @@ function createStore(key, initialValue, isValid) {
                 }
             }
 
-            notify()
+            notificarAssinantes()
         },
     }
 }
 
-export default function useLocalStorageState(key, initialValue, isValid) {
-    if (!stores.has(key)) {
-        stores.set(key, createStore(key, initialValue, isValid))
+// Expõe o estado salvo e uma função para atualizá-lo entre componentes.
+export default function useEstadoNoArmazenamentoLocal(chave, valorInicial, validar) {
+    if (!stores.has(chave)) {
+        stores.set(chave, criarArmazenamento(chave, valorInicial, validar))
     }
 
-    const store = stores.get(key)
+    const store = stores.get(chave)
     const snapshot = useSyncExternalStore(
-        store.subscribe,
-        store.getSnapshot,
-        store.getSnapshot,
+        store.inscrever,
+        store.obterSnapshot,
+        store.obterSnapshot,
     )
 
-    return [snapshot.value, store.setValue, snapshot.error]
+    return [snapshot.value, store.definirValor, snapshot.error]
 }

@@ -2,23 +2,26 @@ import { useState } from "react"
 import { Link, NavLink, Outlet } from "react-router-dom"
 import { VscAccount, VscClose, VscCopy, VscMenu } from "react-icons/vsc"
 
-function createStoreLink(businessName) {
-    const storeSlug = businessName.trim().toLowerCase()
+// Gera o endereço público da loja a partir do nome do comércio.
+function criarLinkDaLoja(nomeDoComercio) {
+    const identificadorDaLoja = nomeDoComercio.trim().toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "")
 
-    return storeSlug
-        ? `${window.location.origin}/vitrine?loja=${encodeURIComponent(storeSlug)}`
+    return identificadorDaLoja
+        ? `${window.location.origin}/vitrine?loja=${encodeURIComponent(identificadorDaLoja)}`
         : ""
 }
 
-export function ProfileOverview({ profile }) {
+// Mostra os dados públicos da loja e permite copiar seu endereço.
+export function VisaoGeralDoPerfil({ profile }) {
     const [message, setMessage] = useState("")
-    const storeLink = createStoreLink(profile.businessName)
+    const storeLink = criarLinkDaLoja(profile.businessName)
 
-    async function copyStoreLink() {
+    // Copia o link público e informa o resultado ao lojista.
+    async function copiarLinkDaLoja() {
         try {
             await navigator.clipboard.writeText(storeLink)
             setMessage("Link copiado.")
@@ -65,7 +68,7 @@ export function ProfileOverview({ profile }) {
                     />
                     <button
                         type="button"
-                        onClick={copyStoreLink}
+                        onClick={copiarLinkDaLoja}
                         disabled={!storeLink}
                         className="flex items-center justify-center gap-2 rounded-lg border border-blue-200 px-4 py-3 text-sm font-medium text-blue-700 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
@@ -83,7 +86,8 @@ export function ProfileOverview({ profile }) {
     )
 }
 
-export function AccountSettings({ profile, onSaveProfile }) {
+// Permite editar os dados de contato e a identidade visual do comércio.
+export function ConfiguracoesDaConta({ profile, aoSalvarPerfil }) {
     const [businessName, setBusinessName] = useState(profile.businessName)
     const [businessImage, setBusinessImage] = useState(profile.image)
     const [whatsappNumber, setWhatsappNumber] = useState(
@@ -91,7 +95,8 @@ export function AccountSettings({ profile, onSaveProfile }) {
     )
     const [message, setMessage] = useState("")
 
-    function handleImageChange(event) {
+    // Valida e carrega a imagem da loja para a pré-visualização.
+    function tratarAlteracaoDaImagem(event) {
         const file = event.target.files?.[0]
         setMessage("")
 
@@ -115,9 +120,10 @@ export function AccountSettings({ profile, onSaveProfile }) {
         reader.readAsDataURL(file)
     }
 
-    function handleSubmit(event) {
+    // Salva o perfil com os dados normalizados.
+    function tratarEnvioDoFormulario(event) {
         event.preventDefault()
-        onSaveProfile({
+        aoSalvarPerfil({
             businessName: businessName.trim(),
             image: businessImage,
             whatsappNumber: whatsappNumber.replace(/\D/g, ""),
@@ -130,7 +136,7 @@ export function AccountSettings({ profile, onSaveProfile }) {
             <h2 className="text-center text-xl font-semibold text-slate-900">
                 Alterar dados da conta
             </h2>
-            <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+            <form onSubmit={tratarEnvioDoFormulario} className="mt-6 space-y-5">
                 <div className="flex flex-col items-center gap-4">
                     {businessImage ? (
                         <img
@@ -154,7 +160,7 @@ export function AccountSettings({ profile, onSaveProfile }) {
                             id="business-photo"
                             type="file"
                             accept="image/*"
-                            onChange={handleImageChange}
+                            onChange={tratarAlteracaoDaImagem}
                             className="block w-full rounded-lg border border-slate-300 text-sm text-slate-600 file:mr-4 file:border-0 file:bg-blue-50 file:px-4 file:py-3 file:font-medium file:text-blue-700 hover:file:bg-blue-100"
                         />
                     </div>
@@ -215,13 +221,15 @@ export function AccountSettings({ profile, onSaveProfile }) {
     )
 }
 
-export function LoginSettings({ login, onSaveLogin }) {
+// Permite atualizar o identificador de login e validar a nova senha.
+export function ConfiguracoesDeAcesso({ login, aoSalvarLogin }) {
     const [loginName, setLoginName] = useState(login)
     const [newPassword, setNewPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [message, setMessage] = useState("")
 
-    function handleSubmit(event) {
+    // Valida os campos antes de atualizar o login da sessão atual.
+    function tratarEnvioDoFormulario(event) {
         event.preventDefault()
         setMessage("")
 
@@ -240,7 +248,7 @@ export function LoginSettings({ login, onSaveLogin }) {
             return
         }
 
-        if (loginName.trim()) onSaveLogin(loginName.trim())
+        if (loginName.trim()) aoSalvarLogin(loginName.trim())
         setNewPassword("")
         setConfirmPassword("")
         setMessage(
@@ -256,7 +264,7 @@ export function LoginSettings({ login, onSaveLogin }) {
             <p className="mt-2 text-center text-sm text-slate-500">
                 A atualização real das credenciais depende da integração com autenticação.
             </p>
-            <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+            <form onSubmit={tratarEnvioDoFormulario} className="mt-6 space-y-5">
                 <div>
                     <label
                         htmlFor="account-login"
@@ -325,9 +333,11 @@ export function LoginSettings({ login, onSaveLogin }) {
     )
 }
 
-export default function UserProfile() {
+// Organiza o menu e as páginas de configuração do perfil.
+export default function PerfilDaLoja() {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
-    const navLinkClass = ({ isActive }) =>
+    // Aplica o destaque visual ao link da seção atual do perfil.
+    const classeDoLinkDeNavegacao = ({ isActive }) =>
         `block rounded-lg px-4 py-3 font-medium transition ${
             isActive ? "bg-blue-50 text-blue-700" : "text-slate-700 hover:bg-slate-100"
         }`
@@ -393,21 +403,21 @@ export default function UserProfile() {
                                 to="/home/profile"
                                 end
                                 onClick={() => setIsMenuOpen(false)}
-                                className={navLinkClass}
+                                className={classeDoLinkDeNavegacao}
                             >
                                 Dados do comércio
                             </NavLink>
                             <NavLink
                                 to="/home/profile/account"
                                 onClick={() => setIsMenuOpen(false)}
-                                className={navLinkClass}
+                                className={classeDoLinkDeNavegacao}
                             >
                                 Alterar dados da conta
                             </NavLink>
                             <NavLink
                                 to="/home/profile/login"
                                 onClick={() => setIsMenuOpen(false)}
-                                className={navLinkClass}
+                                className={classeDoLinkDeNavegacao}
                             >
                                 Alterar dados de login
                             </NavLink>

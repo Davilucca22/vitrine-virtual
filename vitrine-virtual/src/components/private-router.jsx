@@ -1,8 +1,9 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom"
-import { useAuth } from "./auth-context.js"
+import { useAutenticacao } from "./auth-context.js"
 
-export default function PrivateRouter() {
-    const { user } = useAuth()
+// Exige uma sessão para exibir as páginas administrativas.
+export default function RotaPrivada() {
+    const { user } = useAutenticacao()
     const location = useLocation()
 
     return user ? (
