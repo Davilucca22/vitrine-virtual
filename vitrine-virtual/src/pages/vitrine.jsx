@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { VscAccount, VscCallOutgoing } from "react-icons/vsc"
-import { PRODUCTS_STORAGE_KEY, STORE_PROFILE_STORAGE_KEY } from "../constants/storage-keys.js"
+import { useAutenticacao } from "../components/auth-context.js"
+import { PRODUCTS_STORAGE_KEY } from "../constants/storage-keys.js"
 import useEstadoNoArmazenamentoLocal from "../hooks/use-local-storage-state.js"
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
@@ -27,19 +28,6 @@ function validarListaDeProdutos(value) {
     )
 }
 
-// Mantém o perfil salvo compatível com os dados exibidos e usados no pedido.
-function validarPerfilDaLoja(value) {
-    return (
-        value !== null &&
-        typeof value === "object" &&
-        !Array.isArray(value) &&
-        typeof value.businessName === "string" &&
-        typeof value.image === "string" &&
-        (value.whatsappNumber === undefined ||
-            typeof value.whatsappNumber === "string")
-    )
-}
-
 // Monta o link do WhatsApp com o resumo e o valor total do carrinho.
 function criarLinkDoWhatsApp(phoneNumber, cartItems, total, businessName) {
     const phone = String(phoneNumber || "").replace(/\D/g, "")
@@ -57,20 +45,20 @@ function criarLinkDoWhatsApp(phoneNumber, cartItems, total, businessName) {
 
 // Apresenta os produtos, filtros por categoria e carrinho de compras.
 export default function Vitrine() {
+    const { user } = useAutenticacao()
     const [products, , productsStorageError] = useEstadoNoArmazenamentoLocal(
         PRODUCTS_STORAGE_KEY,
         [],
         validarListaDeProdutos,
     )
-    const [profile, , profileStorageError] = useEstadoNoArmazenamentoLocal(
-        STORE_PROFILE_STORAGE_KEY,
-        { businessName: "", image: "", whatsappNumber: "" },
-        validarPerfilDaLoja,
-    )
+    const profile = {
+        businessName: user?.nome_loja || "",
+        image: user?.foto_loja || "",
+        whatsappNumber: user?.contato || "",
+    }
     const [cart, setCart] = useState({})
     const [isCartExpanded, setIsCartExpanded] = useState(false)
     const [selectedCategory, setSelectedCategory] = useState("")
-    const storageError = productsStorageError || profileStorageError
     const categories = [...new Set(
         products
             .map((product) => product.category?.trim())
@@ -132,9 +120,9 @@ export default function Vitrine() {
             </header>
 
             <main className="mx-auto max-w-6xl px-4 py-6 pb-80 sm:px-6 sm:py-8 sm:pb-80">
-                {storageError && (
+                {productsStorageError && (
                     <p role="alert" className="mb-6 rounded-lg bg-amber-50 p-4 text-amber-900">
-                        {storageError} A vitrine pode não mostrar os dados atualizados.
+                        {productsStorageError} A vitrine pode não mostrar os dados atualizados.
                     </p>
                 )}
                 {!profile.whatsappNumber && (

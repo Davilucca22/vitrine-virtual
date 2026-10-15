@@ -2,6 +2,8 @@ import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { VscAccount } from "react-icons/vsc"
 import { useAutenticacao } from "../components/auth-context.js"
+import Registro from "../APIs/Registro.js"
+import Login from "../APIs/Login.js"
 
 const inputClassName =
     "w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -27,20 +29,35 @@ function LayoutDeAutenticacao({ title, description, children }) {
 // Permite que o lojista acesse a área de gerenciamento.
 export function TelaDeLogin() {
     const [error, setError] = useState("")
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const { entrar } = useAutenticacao()
     const navigate = useNavigate()
 
-    // Valida os dados do formulário e inicia a sessão de demonstração.
-    function tratarEnvioDoFormulario(event) {
+    // Valida as credenciais no backend e inicia a sessão após autenticar.
+    async function tratarEnvioDoFormulario(event) {
         event.preventDefault()
+        if (isSubmitting) return
+
         setError("")
 
         const formData = new FormData(event.currentTarget)
+        const email = formData.get("email").trim().toLowerCase()
+        const senha = formData.get("password")
+
+        setIsSubmitting(true)
         try {
-            entrar(formData.get("email"))
+            const result = await Login({ email, senha })
+            const user = result?.response
+            if (!user?.email) {
+                throw new Error("O servidor retornou uma resposta de login inválida.")
+            }
+
+            entrar(user)
             navigate("/home", { replace: true })
         } catch (submitError) {
-            setError(submitError.message)
+            setError(submitError.message || "Não foi possível entrar na conta. Tente novamente.")
+        } finally {
+            setIsSubmitting(false)
         }
     }
 
@@ -84,10 +101,6 @@ export function TelaDeLogin() {
                         placeholder="Sua senha"
                     />
                 </div>
-                <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
-                    Modo de demonstração: o acesso não valida credenciais e não protege
-                    dados. Conecte um backend antes de usar em produção.
-                </p>
                 {error && (
                     <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
                         {error}
@@ -95,9 +108,10 @@ export function TelaDeLogin() {
                 )}
                 <button
                     type="submit"
+                    disabled={isSubmitting}
                     className="w-full rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white transition hover:bg-blue-800"
                 >
-                    Entrar
+                    {isSubmitting ? "Entrando..." : "Entrar"}
                 </button>
             </form>
             <p className="mt-6 text-center text-sm text-slate-600">
@@ -123,6 +137,7 @@ export function TelaDeLogin() {
 export function TelaDeCadastro() {
     const [photoPreview, setPhotoPreview] = useState("")
     const [error, setError] = useState("")
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const { entrar } = useAutenticacao()
     const navigate = useNavigate()
 
@@ -153,25 +168,47 @@ export function TelaDeCadastro() {
         reader.readAsDataURL(file)
     }
 
-    // Confere a senha antes de iniciar a sessão de demonstração.
-    function tratarEnvioDoFormulario(event) {
+    // Envia os campos no formato esperado pelo backend e inicia a sessão após o cadastro.
+    async function tratarEnvioDoFormulario(event) {
         event.preventDefault()
+        if (isSubmitting) return
+
         setError("")
 
-        const formData = new FormData(event.currentTarget)
-        const password = formData.get("password")
-        const passwordConfirmation = formData.get("passwordConfirmation")
+        const inputData = new FormData(event.currentTarget)
+        const password = inputData.get("password")
+        const passwordConfirmation = inputData.get("passwordConfirmation")
 
         if (password !== passwordConfirmation) {
             setError("A confirmação da senha não corresponde.")
             return
         }
 
+        const formData = new FormData()
+        formData.append("nome_loja", inputData.get("businessName").trim())
+        formData.append("email", inputData.get("email").trim().toLowerCase())
+        formData.append("senha", password)
+        formData.append("contato", inputData.get("whatsapp").trim())
+
+        const photo = inputData.get("photo")
+        if (photo instanceof File && photo.size > 0) {
+            formData.append("foto", photo)
+        }
+
+        setIsSubmitting(true)
         try {
-            entrar(formData.get("email"))
+            const result = await Registro({ formData })
+            const user = result?.response
+            if (!user?.email) {
+                throw new Error("O cadastro foi concluído, mas a resposta do servidor é inválida.")
+            }
+
+            entrar(user)
             navigate("/home", { replace: true })
         } catch (submitError) {
-            setError(submitError.message)
+            setError(submitError.message || "Não foi possível criar a conta. Tente novamente.")
+        } finally {
+            setIsSubmitting(false)
         }
     }
 
@@ -247,6 +284,7 @@ export function TelaDeCadastro() {
                         inputMode="tel"
                         autoComplete="tel"
                         required
+                        minLength={13}
                         className={inputClassName}
                         placeholder="Ex.: +55 11 99999-9999"
                     />
@@ -313,16 +351,12 @@ export function TelaDeCadastro() {
                         {error}
                     </p>
                 )}
-                <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
-                    Modo de demonstração: este formulário não cria uma conta real nem
-                    armazena a senha. É necessário conectar um backend antes de usar em
-                    produção.
-                </p>
                 <button
                     type="submit"
+                    disabled={isSubmitting}
                     className="w-full rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white transition hover:bg-blue-800"
                 >
-                    Criar conta
+                    {isSubmitting ? "Criando conta..." : "Criar conta"}
                 </button>
             </form>
             <p className="mt-6 text-center text-sm text-slate-600">

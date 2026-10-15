@@ -86,62 +86,34 @@ export function VisaoGeralDoPerfil({ profile }) {
     )
 }
 
-// Permite editar os dados de contato e a identidade visual do comércio.
-export function ConfiguracoesDaConta({ profile, aoSalvarPerfil }) {
-    const [businessName, setBusinessName] = useState(profile.businessName)
-    const [businessImage, setBusinessImage] = useState(profile.image)
-    const [whatsappNumber, setWhatsappNumber] = useState(
-        profile.whatsappNumber || "",
-    )
-    const [message, setMessage] = useState("")
-
-    // Valida e carrega a imagem da loja para a pré-visualização.
-    function tratarAlteracaoDaImagem(event) {
-        const file = event.target.files?.[0]
-        setMessage("")
-
-        if (!file) return
-
-        if (!file.type.startsWith("image/")) {
-            setMessage("Selecione um arquivo de imagem válido.")
-            event.target.value = ""
-            return
-        }
-
-        const reader = new FileReader()
-        reader.onload = () => {
-            if (typeof reader.result === "string") {
-                setBusinessImage(reader.result)
-            }
-        }
-        reader.onerror = () => {
-            setMessage("Não foi possível carregar a foto. Tente novamente.")
-        }
-        reader.readAsDataURL(file)
-    }
-
-    // Salva o perfil com os dados normalizados.
-    function tratarEnvioDoFormulario(event) {
-        event.preventDefault()
-        aoSalvarPerfil({
-            businessName: businessName.trim(),
-            image: businessImage,
-            whatsappNumber: whatsappNumber.replace(/\D/g, ""),
-        })
-        setMessage("Dados da conta atualizados.")
-    }
-
+// Exibe os dados do comércio retornados pelo servidor.
+export function ConfiguracoesDaConta({ profile, email = "" }) {
     return (
         <section className="mx-auto max-w-2xl rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
             <h2 className="text-center text-xl font-semibold text-slate-900">
-                Alterar dados da conta
+                Dados da conta
             </h2>
-            <form onSubmit={tratarEnvioDoFormulario} className="mt-6 space-y-5">
+            <div className="mt-6 space-y-5">
+                <div>
+                    <label
+                        htmlFor="account-email"
+                        className="mb-2 block text-sm font-medium text-slate-700"
+                    >
+                        Email de acesso
+                    </label>
+                    <input
+                        id="account-email"
+                        type="email"
+                        value={email}
+                        readOnly
+                        className="w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 text-slate-600 outline-none"
+                    />
+                </div>
                 <div className="flex flex-col items-center gap-4">
-                    {businessImage ? (
+                    {profile.image ? (
                         <img
-                            src={businessImage}
-                            alt="Pré-visualização da foto do comércio"
+                            src={profile.image}
+                            alt={`Foto de ${profile.businessName || "seu comércio"}`}
                             className="h-28 w-28 rounded-full object-cover ring-4 ring-blue-50"
                         />
                     ) : (
@@ -149,21 +121,6 @@ export function ConfiguracoesDaConta({ profile, aoSalvarPerfil }) {
                             <VscAccount aria-hidden="true" className="text-5xl" />
                         </div>
                     )}
-                    <div className="w-full">
-                        <label
-                            htmlFor="business-photo"
-                            className="mb-2 block text-sm font-medium text-slate-700"
-                        >
-                            Foto do comércio
-                        </label>
-                        <input
-                            id="business-photo"
-                            type="file"
-                            accept="image/*"
-                            onChange={tratarAlteracaoDaImagem}
-                            className="block w-full rounded-lg border border-slate-300 text-sm text-slate-600 file:mr-4 file:border-0 file:bg-blue-50 file:px-4 file:py-3 file:font-medium file:text-blue-700 hover:file:bg-blue-100"
-                        />
-                    </div>
                 </div>
                 <div>
                     <label
@@ -175,12 +132,9 @@ export function ConfiguracoesDaConta({ profile, aoSalvarPerfil }) {
                     <input
                         id="business-name"
                         type="text"
-                        value={businessName}
-                        onChange={(event) => setBusinessName(event.target.value)}
-                        placeholder="Ex.: Loja da Maria"
-                        maxLength={80}
-                        required
-                        className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        value={profile.businessName}
+                        readOnly
+                        className="w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 text-slate-600 outline-none"
                     />
                 </div>
                 <div>
@@ -193,30 +147,12 @@ export function ConfiguracoesDaConta({ profile, aoSalvarPerfil }) {
                     <input
                         id="business-whatsapp"
                         type="tel"
-                        inputMode="numeric"
-                        autoComplete="tel"
-                        value={whatsappNumber}
-                        onChange={(event) => setWhatsappNumber(event.target.value)}
-                        placeholder="Ex.: 5511999999999"
-                        aria-describedby="business-whatsapp-help"
-                        className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        value={profile.whatsappNumber}
+                        readOnly
+                        className="w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 text-slate-600 outline-none"
                     />
-                    <p id="business-whatsapp-help" className="mt-2 text-sm text-slate-500">
-                        Inclua o código do país e o DDD. Exemplo: 5511999999999.
-                    </p>
                 </div>
-                {message && (
-                    <p role="status" className="text-sm text-blue-700">
-                        {message}
-                    </p>
-                )}
-                <button
-                    type="submit"
-                    className="w-full rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white transition hover:bg-blue-800"
-                >
-                    Salvar dados da conta
-                </button>
-            </form>
+            </div>
         </section>
     )
 }

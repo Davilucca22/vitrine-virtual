@@ -2,7 +2,8 @@ import { useEffect, useState } from "react"
 import { VscEdit, VscTrash } from "react-icons/vsc"
 import { Route, Routes, useLocation, useNavigate } from "react-router-dom"
 import BarraDeNavegacao from "../components/navbar.jsx"
-import { PRODUCTS_STORAGE_KEY, STORE_PROFILE_STORAGE_KEY } from "../constants/storage-keys.js"
+import { useAutenticacao } from "../components/auth-context.js"
+import { PRODUCTS_STORAGE_KEY } from "../constants/storage-keys.js"
 import useEstadoNoArmazenamentoLocal from "../hooks/use-local-storage-state.js"
 import PerfilDaLoja, {
     ConfiguracoesDaConta,
@@ -29,19 +30,6 @@ function validarListaDeProdutos(value) {
     )
 }
 
-// Confere se os dados salvos do comércio podem ser usados com segurança.
-function validarPerfilDaLoja(value) {
-    return (
-        value !== null &&
-        typeof value === "object" &&
-        !Array.isArray(value) &&
-        typeof value.businessName === "string" &&
-        typeof value.image === "string" &&
-        (value.whatsappNumber === undefined ||
-            typeof value.whatsappNumber === "string")
-    )
-}
-
 const initialForm = {
     name: "",
     description: "",
@@ -57,6 +45,7 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
 
 // Exibe os produtos cadastrados e oferece ações de edição e exclusão.
 function CatalogoDeProdutos({ products, aoEditar, aoExcluir }) {
+
     return (
         <>
             <header className="bg-blue-700 px-6 py-6 text-white shadow-md">
@@ -145,6 +134,7 @@ function CatalogoDeProdutos({ products, aoEditar, aoExcluir }) {
 export default function Inicio() {
     const navigate = useNavigate()
     const location = useLocation()
+    const { user } = useAutenticacao()
     const [products, setProducts, productsStorageError] = useEstadoNoArmazenamentoLocal(
         PRODUCTS_STORAGE_KEY,
         [],
@@ -155,12 +145,12 @@ export default function Inicio() {
     const [form, setForm] = useState(initialForm)
     const [imageError, setImageError] = useState("")
     const [isLoadingImage, setIsLoadingImage] = useState(false)
-    const [storeProfile, setStoreProfile, profileStorageError] = useEstadoNoArmazenamentoLocal(
-        STORE_PROFILE_STORAGE_KEY,
-        { businessName: "", image: "", whatsappNumber: "" },
-        validarPerfilDaLoja,
-    )
     const [accountLogin, setAccountLogin] = useState("")
+    const profile = {
+        businessName: user?.nome_loja || "",
+        image: user?.foto_loja || "",
+        whatsappNumber: user?.contato || "",
+    }
 
     useEffect(() => {
         if (!isModalOpen) return undefined
@@ -298,14 +288,14 @@ export default function Inicio() {
                 <Route path="profile" element={<PerfilDaLoja />}>
                     <Route
                         index
-                        element={<VisaoGeralDoPerfil profile={storeProfile} />}
+                        element={<VisaoGeralDoPerfil profile={profile} />}
                     />
                     <Route
                         path="account"
                         element={
                             <ConfiguracoesDaConta
-                                profile={storeProfile}
-                                aoSalvarPerfil={setStoreProfile}
+                                profile={profile}
+                                email={user?.email || ""}
                             />
                         }
                     />
@@ -320,12 +310,12 @@ export default function Inicio() {
                     />
                 </Route>
             </Routes>
-            {(productsStorageError || profileStorageError) && (
+            {productsStorageError && (
                 <p
                     role="alert"
                     className="mx-auto mt-4 max-w-6xl rounded-lg bg-amber-50 p-4 text-amber-900"
                 >
-                    {productsStorageError || profileStorageError}
+                    {productsStorageError}
                 </p>
             )}
 
