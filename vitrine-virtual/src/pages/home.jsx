@@ -3,32 +3,17 @@ import { VscEdit, VscTrash } from "react-icons/vsc"
 import { Route, Routes, useLocation, useNavigate } from "react-router-dom"
 import BarraDeNavegacao from "../components/navbar.jsx"
 import { useAutenticacao } from "../components/auth-context.js"
-import { PRODUCTS_STORAGE_KEY } from "../constants/storage-keys.js"
-import useEstadoNoArmazenamentoLocal from "../hooks/use-local-storage-state.js"
+import {
+    atualizarProduto,
+    criarProduto,
+    excluirProduto as excluirProdutoDaAPI,
+    listarProdutos,
+} from "../APIs/Produto.js"
 import PerfilDaLoja, {
     ConfiguracoesDaConta,
     ConfiguracoesDeAcesso,
     VisaoGeralDoPerfil,
 } from "../components/user-profile.jsx"
-
-// Verifica os campos necessários para exibir e editar cada produto.
-function validarListaDeProdutos(value) {
-    return (
-        Array.isArray(value) &&
-        value.every(
-            (product) =>
-                product !== null &&
-                typeof product === "object" &&
-                typeof product.id === "string" &&
-                typeof product.name === "string" &&
-                typeof product.description === "string" &&
-                typeof product.image === "string" &&
-                (product.category === undefined ||
-                    typeof product.category === "string") &&
-                Number.isFinite(product.price),
-        )
-    )
-}
 
 const initialForm = {
     name: "",
@@ -44,7 +29,7 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
 })
 
 // Exibe os produtos cadastrados e oferece ações de edição e exclusão.
-function CatalogoDeProdutos({ products, aoEditar, aoExcluir }) {
+function CatalogoDeProdutos({ products, aoEditar, aoExcluir, isLoading }) {
 
     return (
         <>
@@ -63,7 +48,11 @@ function CatalogoDeProdutos({ products, aoEditar, aoExcluir }) {
             </header>
 
             <main className="mx-auto max-w-6xl px-6 py-8">
-                {products.length === 0 ? (
+                {isLoading ? (
+                    <p role="status" className="rounded-lg bg-white p-6 text-center text-slate-600">
+                        Carregando produtos...
+                    </p>
+                ) : products.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
                         <h2 className="text-xl font-semibold text-slate-800">
                             Sua vitrine está vazia
@@ -135,22 +124,49 @@ export default function Inicio() {
     const navigate = useNavigate()
     const location = useLocation()
     const { user } = useAutenticacao()
-    const [products, setProducts, productsStorageError] = useEstadoNoArmazenamentoLocal(
-        PRODUCTS_STORAGE_KEY,
-        [],
-        validarListaDeProdutos,
-    )
+    const [products, setProducts] = useState([])
+    const [productsError, setProductsError] = useState("")
+    const [isLoadingProducts, setIsLoadingProducts] = useState(true)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingProductId, setEditingProductId] = useState(null)
     const [form, setForm] = useState(initialForm)
+    const [imageFile, setImageFile] = useState(null)
     const [imageError, setImageError] = useState("")
     const [isLoadingImage, setIsLoadingImage] = useState(false)
+    const [isSubmittingProduct, setIsSubmittingProduct] = useState(false)
     const [accountLogin, setAccountLogin] = useState("")
     const profile = {
+        id: user?.id,
         businessName: user?.nome_loja || "",
         image: user?.foto_loja || "",
         whatsappNumber: user?.contato || "",
     }
+
+    useEffect(() => {
+        let isCurrent = true
+
+        async function carregarProdutos() {
+            setIsLoadingProducts(true)
+            setProductsError("")
+            try {
+                const loadedProducts = await listarProdutos(user?.id)
+                if (isCurrent) setProducts(loadedProducts)
+            } catch (error) {
+                if (isCurrent) {
+                    setProductsError(
+                        error.message || "Não foi possível carregar os produtos.",
+                    )
+                }
+            } finally {
+                if (isCurrent) setIsLoadingProducts(false)
+            }
+        }
+
+        carregarProdutos()
+        return () => {
+            isCurrent = false
+        }
+    }, [user?.id])
 
     useEffect(() => {
         if (!isModalOpen) return undefined
@@ -169,6 +185,7 @@ export default function Inicio() {
         navigate("/home")
         setEditingProductId(null)
         setForm(initialForm)
+        setImageFile(null)
         setImageError("")
         setIsLoadingImage(false)
         setIsModalOpen(true)
@@ -184,6 +201,7 @@ export default function Inicio() {
             price: String(product.price),
             image: product.image,
         })
+        setImageFile(null)
         setImageError("")
         setIsLoadingImage(false)
         setIsModalOpen(true)
@@ -194,6 +212,7 @@ export default function Inicio() {
         setIsModalOpen(false)
         setEditingProductId(null)
         setForm(initialForm)
+        setImageFile(null)
         setImageError("")
         setIsLoadingImage(false)
     }
@@ -212,6 +231,7 @@ export default function Inicio() {
         }
 
         const reader = new FileReader()
+        setImageFile(file)
         setIsLoadingImage(true)
         setForm((currentForm) => ({ ...currentForm, image: "" }))
         reader.onload = () => {
@@ -228,8 +248,9 @@ export default function Inicio() {
     }
 
     // Cria ou atualiza o produto usando os valores validados do formulário.
-    function tratarEnvioDoFormulario(event) {
+    async function tratarEnvioDoFormulario(event) {
         event.preventDefault()
+        if (isSubmittingProduct) return
 
         const product = {
             ...form,
@@ -237,28 +258,44 @@ export default function Inicio() {
             price: Number(form.price),
         }
 
-        if (editingProductId) {
-            setProducts((currentProducts) =>
-                currentProducts.map((item) =>
-                    item.id === editingProductId ? { ...item, ...product } : item,
-                ),
-            )
-        } else {
-            setProducts((currentProducts) => [
-                ...currentProducts,
-                { id: crypto.randomUUID(), ...product },
-            ])
-        }
+        setProductsError("")
+        setIsSubmittingProduct(true)
+        try {
+            const savedProduct = editingProductId
+                ? await atualizarProduto(editingProductId, product, imageFile)
+                : await criarProduto(product, imageFile)
 
-        fecharModal()
+            setProducts((currentProducts) =>
+                editingProductId
+                    ? currentProducts.map((item) =>
+                          item.id === editingProductId ? savedProduct : item,
+                      )
+                    : [...currentProducts, savedProduct],
+            )
+            fecharModal()
+        } catch (error) {
+            setProductsError(
+                error.message || "Não foi possível salvar o produto. Tente novamente.",
+            )
+        } finally {
+            setIsSubmittingProduct(false)
+        }
     }
 
-    // Confirma a exclusão antes de remover o produto do armazenamento.
-    function excluirProduto(productId) {
+    // Confirma a exclusão antes de remover o produto da API.
+    async function excluirProduto(productId) {
         if (!window.confirm("Deseja realmente excluir este produto?")) return
-        setProducts((currentProducts) =>
-            currentProducts.filter((product) => product.id !== productId),
-        )
+        setProductsError("")
+        try {
+            await excluirProdutoDaAPI(productId)
+            setProducts((currentProducts) =>
+                currentProducts.filter((product) => product.id !== productId),
+            )
+        } catch (error) {
+            setProductsError(
+                error.message || "Não foi possível excluir o produto. Tente novamente.",
+            )
+        }
     }
 
     // Alterna entre o catálogo de produtos e as configurações do perfil.
@@ -282,6 +319,7 @@ export default function Inicio() {
                             products={products}
                             aoEditar={abrirModalDeEdicao}
                             aoExcluir={excluirProduto}
+                            isLoading={isLoadingProducts}
                         />
                     }
                 />
@@ -310,12 +348,12 @@ export default function Inicio() {
                     />
                 </Route>
             </Routes>
-            {productsStorageError && (
+            {productsError && (
                 <p
                     role="alert"
                     className="mx-auto mt-4 max-w-6xl rounded-lg bg-amber-50 p-4 text-amber-900"
                 >
-                    {productsStorageError}
+                    {productsError}
                 </p>
             )}
 
@@ -338,6 +376,11 @@ export default function Inicio() {
                         >
                             {editingProductId ? "Editar produto" : "Adicionar produto"}
                         </h2>
+                        {productsError && (
+                            <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-800">
+                                {productsError}
+                            </p>
+                        )}
                         <form onSubmit={tratarEnvioDoFormulario} className="mt-6 space-y-4">
                             <div>
                                 <label
@@ -457,16 +500,25 @@ export default function Inicio() {
                                 <button
                                     type="button"
                                     onClick={fecharModal}
+                                    disabled={isSubmittingProduct}
                                     className="rounded-lg border border-slate-300 px-5 py-3 font-medium text-slate-700 transition hover:bg-slate-50"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={Boolean(imageError) || isLoadingImage}
+                                    disabled={
+                                        Boolean(imageError) ||
+                                        isLoadingImage ||
+                                        isSubmittingProduct
+                                    }
                                     className="rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                    {editingProductId ? "Salvar alterações" : "Cadastrar"}
+                                    {isSubmittingProduct
+                                        ? "Salvando..."
+                                        : editingProductId
+                                          ? "Salvar alterações"
+                                          : "Cadastrar"}
                                 </button>
                             </div>
                         </form>

@@ -2,23 +2,20 @@ import { useState } from "react"
 import { Link, NavLink, Outlet } from "react-router-dom"
 import { VscAccount, VscClose, VscCopy, VscMenu } from "react-icons/vsc"
 
-// Gera o endereço público da loja a partir do nome do comércio.
-function criarLinkDaLoja(nomeDoComercio) {
-    const identificadorDaLoja = nomeDoComercio.trim().toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-|-$/g, "")
+// Gera o endereço público da loja usando o identificador aceito pela API.
+function criarLinkDaLoja(idLoja) {
+    if (idLoja === undefined || idLoja === null || !String(idLoja).trim()) {
+        return ""
+    }
 
-    return identificadorDaLoja
-        ? `${window.location.origin}/vitrine?loja=${encodeURIComponent(identificadorDaLoja)}`
-        : ""
+    const query = new URLSearchParams({ id_loja: String(idLoja) })
+    return `${window.location.origin}/vitrine?${query}`
 }
 
 // Mostra os dados públicos da loja e permite copiar seu endereço.
 export function VisaoGeralDoPerfil({ profile }) {
     const [message, setMessage] = useState("")
-    const storeLink = criarLinkDaLoja(profile.businessName)
+    const storeLink = criarLinkDaLoja(profile.id)
 
     // Copia o link público e informa o resultado ao lojista.
     async function copiarLinkDaLoja() {
@@ -63,7 +60,7 @@ export function VisaoGeralDoPerfil({ profile }) {
                         type="url"
                         value={storeLink}
                         readOnly
-                        placeholder="Cadastre o nome do comércio para gerar o link"
+                        placeholder="ID da loja indisponível para gerar o link"
                         className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-600 outline-none"
                     />
                     <button

@@ -1,32 +1,13 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { VscAccount, VscCallOutgoing } from "react-icons/vsc"
 import { useAutenticacao } from "../components/auth-context.js"
-import { PRODUCTS_STORAGE_KEY } from "../constants/storage-keys.js"
-import useEstadoNoArmazenamentoLocal from "../hooks/use-local-storage-state.js"
+import { useSearchParams } from "react-router-dom"
+import { listarProdutos } from "../APIs/Produto.js"
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
 })
-
-// Garante que os produtos salvos tenham os campos usados pela vitrine.
-function validarListaDeProdutos(value) {
-    return (
-        Array.isArray(value) &&
-        value.every(
-            (product) =>
-                product !== null &&
-                typeof product === "object" &&
-                typeof product.id === "string" &&
-                typeof product.name === "string" &&
-                typeof product.description === "string" &&
-                typeof product.image === "string" &&
-                (product.category === undefined ||
-                    typeof product.category === "string") &&
-                Number.isFinite(product.price),
-        )
-    )
-}
 
 // Monta o link do WhatsApp com o resumo e o valor total do carrinho.
 function criarLinkDoWhatsApp(phoneNumber, cartItems, total, businessName) {
@@ -46,11 +27,11 @@ function criarLinkDoWhatsApp(phoneNumber, cartItems, total, businessName) {
 // Apresenta os produtos, filtros por categoria e carrinho de compras.
 export default function Vitrine() {
     const { user } = useAutenticacao()
-    const [products, , productsStorageError] = useEstadoNoArmazenamentoLocal(
-        PRODUCTS_STORAGE_KEY,
-        [],
-        validarListaDeProdutos,
-    )
+    const [searchParams] = useSearchParams()
+    const idLoja = searchParams.get("id_loja")
+    const [products, setProducts] = useState([])
+    const [productsError, setProductsError] = useState("")
+    const [isLoadingProducts, setIsLoadingProducts] = useState(true)
     const profile = {
         businessName: user?.nome_loja || "",
         image: user?.foto_loja || "",
@@ -59,6 +40,32 @@ export default function Vitrine() {
     const [cart, setCart] = useState({})
     const [isCartExpanded, setIsCartExpanded] = useState(false)
     const [selectedCategory, setSelectedCategory] = useState("")
+
+    useEffect(() => {
+        let isCurrent = true
+
+        async function carregarProdutos() {
+            setIsLoadingProducts(true)
+            setProductsError("")
+            try {
+                const loadedProducts = await listarProdutos(idLoja)
+                if (isCurrent) setProducts(loadedProducts)
+            } catch (error) {
+                if (isCurrent) {
+                    setProductsError(
+                        error.message || "Não foi possível carregar os produtos.",
+                    )
+                }
+            } finally {
+                if (isCurrent) setIsLoadingProducts(false)
+            }
+        }
+
+        carregarProdutos()
+        return () => {
+            isCurrent = false
+        }
+    }, [idLoja])
     const categories = [...new Set(
         products
             .map((product) => product.category?.trim())
@@ -120,9 +127,9 @@ export default function Vitrine() {
             </header>
 
             <main className="mx-auto max-w-6xl px-4 py-6 pb-80 sm:px-6 sm:py-8 sm:pb-80">
-                {productsStorageError && (
+                {productsError && (
                     <p role="alert" className="mb-6 rounded-lg bg-amber-50 p-4 text-amber-900">
-                        {productsStorageError} A vitrine pode não mostrar os dados atualizados.
+                        {productsError}
                     </p>
                 )}
                 {!profile.whatsappNumber && (
@@ -273,7 +280,11 @@ export default function Vitrine() {
                         </div>
                     )}
                 </section>
-                {products.length === 0 ? (
+                {isLoadingProducts ? (
+                    <p role="status" className="rounded-lg bg-white p-6 text-center text-slate-600">
+                        Carregando produtos...
+                    </p>
+                ) : products.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
                         <h2 className="text-xl font-semibold text-slate-800">
                             Nenhum produto disponível
