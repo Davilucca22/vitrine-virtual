@@ -65,7 +65,16 @@ export async function listarProdutos(idLoja) {
         throw new Error("O servidor retornou uma lista de produtos inválida.")
     }
 
-    return data.response.map(normalizarProduto)
+    const whatsappNumber =
+        data.response[0]?.contato ?? data.response[0]?.CONTATO ?? ""
+    if (whatsappNumber !== "" && typeof whatsappNumber !== "string") {
+        throw new Error("O servidor retornou um contato de WhatsApp inválido.")
+    }
+
+    return {
+        products: data.response.map(normalizarProduto),
+        whatsappNumber,
+    }
 }
 
 export async function criarProduto(product, imageFile) {

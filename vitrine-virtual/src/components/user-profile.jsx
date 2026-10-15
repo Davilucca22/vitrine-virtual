@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Link, NavLink, Outlet } from "react-router-dom"
 import { VscAccount, VscClose, VscCopy, VscMenu } from "react-icons/vsc"
 
@@ -83,14 +83,76 @@ export function VisaoGeralDoPerfil({ profile }) {
     )
 }
 
-// Exibe os dados do comércio retornados pelo servidor.
-export function ConfiguracoesDaConta({ profile, email = "" }) {
+// Permite alterar os dados públicos do comércio na conta autenticada.
+export function ConfiguracoesDaConta({ profile, email = "", aoSalvarDados }) {
+    const [nomeLoja, setNomeLoja] = useState(profile.businessName)
+    const [contato, setContato] = useState(profile.whatsappNumber)
+    const [foto, setFoto] = useState(null)
+    const [fotoPreview, setFotoPreview] = useState(profile.image)
+    const fotoPreviewUrl = useRef("")
+    const [error, setError] = useState("")
+    const [message, setMessage] = useState("")
+    const [isSubmitting, setIsSubmitting] = useState(false)
+
+    useEffect(() => {
+        return () => {
+            if (fotoPreviewUrl.current) {
+                URL.revokeObjectURL(fotoPreviewUrl.current)
+            }
+        }
+    }, [])
+
+    function tratarSelecaoDeFoto(event) {
+        const file = event.target.files?.[0]
+        setError("")
+        setMessage("")
+        if (!file) return
+        if (!file.type.startsWith("image/")) {
+            setError("Selecione um arquivo de imagem válido.")
+            event.target.value = ""
+            return
+        }
+
+        if (fotoPreviewUrl.current) {
+            URL.revokeObjectURL(fotoPreviewUrl.current)
+        }
+        fotoPreviewUrl.current = URL.createObjectURL(file)
+        setFoto(file)
+        setFotoPreview(fotoPreviewUrl.current)
+        setFoto(file)
+    }
+
+    async function tratarEnvio(event) {
+        event.preventDefault()
+        setError("")
+        setMessage("")
+        setIsSubmitting(true)
+        try {
+            const updatedUser = await aoSalvarDados({
+                nomeLoja: nomeLoja.trim(),
+                contato: contato.trim(),
+                foto,
+            })
+            if (fotoPreviewUrl.current) {
+                URL.revokeObjectURL(fotoPreviewUrl.current)
+                fotoPreviewUrl.current = ""
+            }
+            setFoto(null)
+            setFotoPreview(updatedUser.foto_loja)
+            setMessage("Dados da conta atualizados.")
+        } catch (submitError) {
+            setError(submitError.message || "Não foi possível atualizar os dados.")
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
     return (
         <section className="mx-auto max-w-2xl rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
             <h2 className="text-center text-xl font-semibold text-slate-900">
                 Dados da conta
             </h2>
-            <div className="mt-6 space-y-5">
+            <form onSubmit={tratarEnvio} className="mt-6 space-y-5">
                 <div>
                     <label
                         htmlFor="account-email"
@@ -107,9 +169,9 @@ export function ConfiguracoesDaConta({ profile, email = "" }) {
                     />
                 </div>
                 <div className="flex flex-col items-center gap-4">
-                    {profile.image ? (
+                    {fotoPreview ? (
                         <img
-                            src={profile.image}
+                            src={fotoPreview}
                             alt={`Foto de ${profile.businessName || "seu comércio"}`}
                             className="h-28 w-28 rounded-full object-cover ring-4 ring-blue-50"
                         />
@@ -121,6 +183,21 @@ export function ConfiguracoesDaConta({ profile, email = "" }) {
                 </div>
                 <div>
                     <label
+                        htmlFor="business-photo"
+                        className="mb-2 block text-sm font-medium text-slate-700"
+                    >
+                        Foto do comércio
+                    </label>
+                    <input
+                        id="business-photo"
+                        type="file"
+                        accept="image/*"
+                        onChange={tratarSelecaoDeFoto}
+                        className="block w-full rounded-lg border border-slate-300 text-sm text-slate-600 file:mr-4 file:border-0 file:bg-blue-50 file:px-4 file:py-3 file:font-medium file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                </div>
+                <div>
+                    <label
                         htmlFor="business-name"
                         className="mb-2 block text-sm font-medium text-slate-700"
                     >
@@ -129,9 +206,10 @@ export function ConfiguracoesDaConta({ profile, email = "" }) {
                     <input
                         id="business-name"
                         type="text"
-                        value={profile.businessName}
-                        readOnly
-                        className="w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 text-slate-600 outline-none"
+                        value={nomeLoja}
+                        onChange={(event) => setNomeLoja(event.target.value)}
+                        required
+                        className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                     />
                 </div>
                 <div>
@@ -144,49 +222,68 @@ export function ConfiguracoesDaConta({ profile, email = "" }) {
                     <input
                         id="business-whatsapp"
                         type="tel"
-                        value={profile.whatsappNumber}
-                        readOnly
-                        className="w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 text-slate-600 outline-none"
+                        value={contato}
+                        onChange={(event) => setContato(event.target.value)}
+                        required
+                        minLength={13}
+                        className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                     />
                 </div>
-            </div>
+                {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+                {message && <p role="status" className="text-sm text-blue-700">{message}</p>}
+                <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                    {isSubmitting ? "Salvando..." : "Salvar dados da conta"}
+                </button>
+            </form>
         </section>
     )
 }
 
-// Permite atualizar o identificador de login e validar a nova senha.
-export function ConfiguracoesDeAcesso({ login, aoSalvarLogin }) {
-    const [loginName, setLoginName] = useState(login)
+// Permite atualizar o email de acesso e a senha da conta.
+export function ConfiguracoesDeAcesso({ email, aoSalvarLogin }) {
+    const [loginEmail, setLoginEmail] = useState(email)
     const [newPassword, setNewPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [message, setMessage] = useState("")
+    const [error, setError] = useState("")
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
-    // Valida os campos antes de atualizar o login da sessão atual.
-    function tratarEnvioDoFormulario(event) {
+    // Valida os campos antes de atualizar as credenciais no servidor.
+    async function tratarEnvioDoFormulario(event) {
         event.preventDefault()
         setMessage("")
+        setError("")
 
-        if (!loginName.trim() && !newPassword) {
-            setMessage("Informe um novo login ou uma nova senha.")
+        if (!loginEmail.trim() || !newPassword) {
+            setError("Informe o novo email e a nova senha.")
             return
         }
 
         if (newPassword && newPassword.length < 8) {
-            setMessage("A nova senha deve ter pelo menos 8 caracteres.")
+            setError("A nova senha deve ter pelo menos 8 caracteres.")
             return
         }
 
         if (newPassword !== confirmPassword) {
-            setMessage("A confirmação da senha não corresponde.")
+            setError("A confirmação da senha não corresponde.")
             return
         }
 
-        if (loginName.trim()) aoSalvarLogin(loginName.trim())
-        setNewPassword("")
-        setConfirmPassword("")
-        setMessage(
-            "Login atualizado nesta sessão. A alteração de senha exige integração com autenticação no backend.",
-        )
+        setIsSubmitting(true)
+        try {
+            await aoSalvarLogin({ email: loginEmail.trim(), senha: newPassword })
+            setNewPassword("")
+            setConfirmPassword("")
+            setMessage("Dados de login atualizados.")
+        } catch (submitError) {
+            setError(submitError.message || "Não foi possível atualizar os dados de login.")
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
     return (
@@ -195,7 +292,7 @@ export function ConfiguracoesDeAcesso({ login, aoSalvarLogin }) {
                 Alterar dados de login
             </h2>
             <p className="mt-2 text-center text-sm text-slate-500">
-                A atualização real das credenciais depende da integração com autenticação.
+                Atualize o email e a senha usados para acessar sua conta.
             </p>
             <form onSubmit={tratarEnvioDoFormulario} className="mt-6 space-y-5">
                 <div>
@@ -207,11 +304,12 @@ export function ConfiguracoesDeAcesso({ login, aoSalvarLogin }) {
                     </label>
                     <input
                         id="account-login"
-                        type="text"
+                        type="email"
+                        required
                         autoComplete="username"
-                        value={loginName}
-                        onChange={(event) => setLoginName(event.target.value)}
-                        placeholder="Seu novo login"
+                        value={loginEmail}
+                        onChange={(event) => setLoginEmail(event.target.value)}
+                        placeholder="voce@exemplo.com"
                         className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                     />
                 </div>
@@ -250,6 +348,11 @@ export function ConfiguracoesDeAcesso({ login, aoSalvarLogin }) {
                         className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                     />
                 </div>
+                {error && (
+                    <p role="alert" className="text-sm text-red-700">
+                        {error}
+                    </p>
+                )}
                 {message && (
                     <p role="status" className="text-sm text-blue-700">
                         {message}
@@ -257,9 +360,10 @@ export function ConfiguracoesDeAcesso({ login, aoSalvarLogin }) {
                 )}
                 <button
                     type="submit"
+                    disabled={isSubmitting}
                     className="w-full rounded-lg border border-blue-200 px-5 py-3 font-semibold text-blue-700 transition hover:bg-blue-50"
                 >
-                    Salvar dados de login
+                    {isSubmitting ? "Salvando..." : "Salvar dados de login"}
                 </button>
             </form>
         </section>
@@ -267,7 +371,7 @@ export function ConfiguracoesDeAcesso({ login, aoSalvarLogin }) {
 }
 
 // Organiza o menu e as páginas de configuração do perfil.
-export default function PerfilDaLoja() {
+export default function PerfilDaLoja({ aoSair }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     // Aplica o destaque visual ao link da seção atual do perfil.
     const classeDoLinkDeNavegacao = ({ isActive }) =>
@@ -354,6 +458,16 @@ export default function PerfilDaLoja() {
                             >
                                 Alterar dados de login
                             </NavLink>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsMenuOpen(false)
+                                    aoSair()
+                                }}
+                                className="mt-2 block w-full rounded-lg px-4 py-3 text-left font-medium text-red-700 transition hover:bg-red-50"
+                            >
+                                Sair da conta
+                            </button>
                             <Link
                                 to="/home"
                                 onClick={() => setIsMenuOpen(false)}

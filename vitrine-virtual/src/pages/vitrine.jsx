@@ -30,12 +30,12 @@ export default function Vitrine() {
     const [searchParams] = useSearchParams()
     const idLoja = searchParams.get("id_loja")
     const [products, setProducts] = useState([])
+    const [whatsappNumber, setWhatsappNumber] = useState("")
     const [productsError, setProductsError] = useState("")
     const [isLoadingProducts, setIsLoadingProducts] = useState(true)
     const profile = {
         businessName: user?.nome_loja || "",
         image: user?.foto_loja || "",
-        whatsappNumber: user?.contato || "",
     }
     const [cart, setCart] = useState({})
     const [isCartExpanded, setIsCartExpanded] = useState(false)
@@ -48,8 +48,11 @@ export default function Vitrine() {
             setIsLoadingProducts(true)
             setProductsError("")
             try {
-                const loadedProducts = await listarProdutos(idLoja)
-                if (isCurrent) setProducts(loadedProducts)
+                const catalog = await listarProdutos(idLoja)
+                if (isCurrent) {
+                    setProducts(catalog.products)
+                    setWhatsappNumber(catalog.whatsappNumber)
+                }
             } catch (error) {
                 if (isCurrent) {
                     setProductsError(
@@ -132,10 +135,10 @@ export default function Vitrine() {
                         {productsError}
                     </p>
                 )}
-                {!profile.whatsappNumber && (
+                {!whatsappNumber && (
                     <p className="mb-6 rounded-lg bg-blue-50 p-4 text-center text-sm text-blue-900">
-                        O WhatsApp da loja ainda não foi configurado. O botão abrirá o
-                        WhatsApp para você escolher um contato.
+                        Não foi possível obter o WhatsApp da loja. O contato não está
+                        disponível para finalizar o pedido.
                     </p>
                 )}
                 {products.length > 0 && (
@@ -263,14 +266,22 @@ export default function Vitrine() {
                                     </ul>
                                     <a
                                         href={criarLinkDoWhatsApp(
-                                            profile.whatsappNumber || "",
+                                            whatsappNumber,
                                             cartItems,
                                             cartTotal,
                                             profile.businessName,
                                         )}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="m-4 mt-2 flex shrink-0 items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 sm:mx-5 sm:mb-5"
+                                        aria-disabled={!whatsappNumber}
+                                        onClick={(event) => {
+                                            if (!whatsappNumber) event.preventDefault()
+                                        }}
+                                        className={`m-4 mt-2 flex shrink-0 items-center justify-center gap-2 rounded-lg px-4 py-3 text-center text-sm font-semibold text-white transition focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 sm:mx-5 sm:mb-5 ${
+                                            whatsappNumber
+                                                ? "bg-green-600 hover:bg-green-700"
+                                                : "cursor-not-allowed bg-slate-400"
+                                        }`}
                                     >
                                         <VscCallOutgoing aria-hidden="true" />
                                         Finalizar pedido pelo WhatsApp

@@ -4,6 +4,11 @@ import { Route, Routes, useLocation, useNavigate } from "react-router-dom"
 import BarraDeNavegacao from "../components/navbar.jsx"
 import { useAutenticacao } from "../components/auth-context.js"
 import {
+    atualizarDadosDaConta,
+    atualizarDadosDeLogin,
+    encerrarSessao,
+} from "../APIs/Usuario.js"
+import {
     atualizarProduto,
     criarProduto,
     excluirProduto as excluirProdutoDaAPI,
@@ -123,7 +128,7 @@ function CatalogoDeProdutos({ products, aoEditar, aoExcluir, isLoading }) {
 export default function Inicio() {
     const navigate = useNavigate()
     const location = useLocation()
-    const { user } = useAutenticacao()
+    const { user, atualizarUsuario, sair } = useAutenticacao()
     const [products, setProducts] = useState([])
     const [productsError, setProductsError] = useState("")
     const [isLoadingProducts, setIsLoadingProducts] = useState(true)
@@ -134,7 +139,7 @@ export default function Inicio() {
     const [imageError, setImageError] = useState("")
     const [isLoadingImage, setIsLoadingImage] = useState(false)
     const [isSubmittingProduct, setIsSubmittingProduct] = useState(false)
-    const [accountLogin, setAccountLogin] = useState("")
+    const [logoutError, setLogoutError] = useState("")
     const profile = {
         id: user?.id,
         businessName: user?.nome_loja || "",
@@ -150,7 +155,7 @@ export default function Inicio() {
             setProductsError("")
             try {
                 const loadedProducts = await listarProdutos(user?.id)
-                if (isCurrent) setProducts(loadedProducts)
+                if (isCurrent) setProducts(loadedProducts.products)
             } catch (error) {
                 if (isCurrent) {
                     setProductsError(
@@ -298,6 +303,28 @@ export default function Inicio() {
         }
     }
 
+    async function salvarDadosDaConta(dados) {
+        const updatedUser = await atualizarDadosDaConta(dados)
+        atualizarUsuario(updatedUser)
+        return updatedUser
+    }
+
+    async function salvarDadosDeLogin(credentials) {
+        const updatedUser = await atualizarDadosDeLogin(credentials)
+        atualizarUsuario(updatedUser)
+    }
+
+    async function encerrarConta() {
+        setLogoutError("")
+        try {
+            await encerrarSessao()
+            sair()
+            navigate("/login", { replace: true })
+        } catch (error) {
+            setLogoutError(error.message || "Não foi possível encerrar a sessão.")
+        }
+    }
+
     // Alterna entre o catálogo de produtos e as configurações do perfil.
     function tratarCliqueNoPerfil() {
         if (location.pathname.startsWith("/home/profile")) {
@@ -323,7 +350,7 @@ export default function Inicio() {
                         />
                     }
                 />
-                <Route path="profile" element={<PerfilDaLoja />}>
+                <Route path="profile" element={<PerfilDaLoja aoSair={encerrarConta} />}>
                     <Route
                         index
                         element={<VisaoGeralDoPerfil profile={profile} />}
@@ -334,6 +361,7 @@ export default function Inicio() {
                             <ConfiguracoesDaConta
                                 profile={profile}
                                 email={user?.email || ""}
+                                aoSalvarDados={salvarDadosDaConta}
                             />
                         }
                     />
@@ -341,13 +369,21 @@ export default function Inicio() {
                         path="login"
                         element={
                             <ConfiguracoesDeAcesso
-                                login={accountLogin}
-                                aoSalvarLogin={setAccountLogin}
+                                email={user?.email || ""}
+                                aoSalvarLogin={salvarDadosDeLogin}
                             />
                         }
                     />
                 </Route>
             </Routes>
+            {logoutError && (
+                <p
+                    role="alert"
+                    className="mx-auto mt-4 max-w-6xl rounded-lg bg-red-50 p-4 text-red-800"
+                >
+                    {logoutError}
+                </p>
+            )}
             {productsError && (
                 <p
                     role="alert"

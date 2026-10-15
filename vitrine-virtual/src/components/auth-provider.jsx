@@ -53,7 +53,14 @@ export default function ProvedorDeAutenticacao({ children }) {
             throw new Error("Não há um usuário autenticado para atualizar.")
         }
 
-        setUser((currentUser) => ({ ...currentUser, ...updates }))
+        const updatedUser = { ...user, ...updates }
+        try {
+            window.sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(updatedUser))
+        } catch {
+            throw new Error("Não foi possível salvar os dados da sessão neste navegador.")
+        }
+
+        setUser(updatedUser)
     }
 
     // Encerra a sessão de demonstração e limpa o usuário atual.
