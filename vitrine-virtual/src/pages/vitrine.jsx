@@ -183,8 +183,15 @@ export default function Vitrine() {
                         onClick={() => setIsCartExpanded((expanded) => !expanded)}
                         className="flex min-h-[76px] w-full shrink-0 items-center justify-between gap-2 px-4 text-left focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:px-5"
                     >
-                        <span className="min-w-0 truncate text-sm font-semibold text-slate-800 sm:text-base">
-                            Carrinho · {cartQuantity} {cartQuantity === 1 ? "item" : "itens"}
+                        <span className="min-w-0">
+                            <span className="block truncate text-sm font-semibold text-slate-800 sm:text-base">
+                                Carrinho · {cartQuantity} {cartQuantity === 1 ? "item" : "itens"}
+                            </span>
+                            {!isCartExpanded && (
+                                <span className="mt-1 block truncate text-xs font-medium text-indigo-700">
+                                    Toque aqui para revisar e finalizar
+                                </span>
+                            )}
                         </span>
                         <span className="shrink-0 rounded-lg bg-indigo-50 px-3 py-2 text-sm font-bold text-indigo-700 sm:text-base">
                             {currencyFormatter.format(cartTotal)}
