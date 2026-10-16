@@ -67,13 +67,22 @@ export async function listarProdutos(idLoja) {
 
     const whatsappNumber =
         data.response[0]?.contato ?? data.response[0]?.CONTATO ?? ""
+    const storeName =
+        data.response[0]?.nome_loja ?? data.response[0]?.NOME_LOJA ?? ""
+    const storeImage =
+        data.response[0]?.foto_loja ?? data.response[0]?.FOTO_LOJA ?? ""
     if (whatsappNumber !== "" && typeof whatsappNumber !== "string") {
         throw new Error("O servidor retornou um contato de WhatsApp inválido.")
+    }
+    if (typeof storeName !== "string" || typeof storeImage !== "string") {
+        throw new Error("O servidor retornou dados da loja inválidos.")
     }
 
     return {
         products: data.response.map(normalizarProduto),
         whatsappNumber,
+        storeName,
+        storeImage,
     }
 }
 

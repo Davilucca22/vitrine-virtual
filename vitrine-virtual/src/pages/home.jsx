@@ -38,15 +38,15 @@ function CatalogoDeProdutos({ products, aoEditar, aoExcluir, isLoading }) {
 
     return (
         <>
-            <header className="bg-blue-700 px-6 py-6 text-white shadow-md">
+            <header className="bg-indigo-700 px-6 py-6 text-white shadow-sm">
                 <div className="mx-auto max-w-6xl text-center">
-                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-200">
+                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-100">
                         Vitrine virtual
                     </p>
                     <h1 className="mt-2 text-3xl font-bold sm:text-4xl">
                         Seus produtos
                     </h1>
-                    <p className="mt-2 text-blue-100">
+                    <p className="mt-2 text-indigo-100">
                         Cadastre e organize os produtos da sua vitrine.
                     </p>
                 </div>
@@ -82,25 +82,25 @@ function CatalogoDeProdutos({ products, aoEditar, aoExcluir, isLoading }) {
                                     className="h-56 w-full object-cover"
                                 />
                                 <div className="p-5">
-                                    <h2 className="truncate text-center text-xl font-semibold text-slate-900">
+                                    <h2 className="truncate text-center text-xl font-semibold text-slate-800">
                                         {product.name}
                                     </h2>
                                     {product.category && (
-                                        <p className="mt-1 text-sm font-medium text-blue-700">
+                                        <p className="mt-1 text-sm font-medium text-indigo-700">
                                             {product.category}
                                         </p>
                                     )}
                                     <p className="mt-2 min-h-12 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
                                         {product.description}
                                     </p>
-                                    <p className="mt-4 text-lg font-bold text-blue-700">
+                                    <p className="mt-4 text-lg font-bold text-indigo-700">
                                         {currencyFormatter.format(product.price)}
                                     </p>
                                     <div className="mt-5 flex gap-3">
                                         <button
                                             type="button"
                                             onClick={() => aoEditar(product)}
-                                            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-blue-200 px-4 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-50"
+                                            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-indigo-200 px-4 py-2 text-sm font-medium text-indigo-700 transition hover:bg-indigo-50"
                                         >
                                             <VscEdit aria-hidden="true" />
                                             Editar
@@ -337,7 +337,8 @@ export default function Inicio() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-100 pb-24">
+        <div className="min-h-screen bg-slate-50 pb-20">
+          <div className="min-h-screen">
             <Routes>
                 <Route
                     index
@@ -387,7 +388,7 @@ export default function Inicio() {
             {productsError && (
                 <p
                     role="alert"
-                    className="mx-auto mt-4 max-w-6xl rounded-lg bg-amber-50 p-4 text-amber-900"
+                    className="mx-auto mt-4 max-w-6xl rounded-lg bg-red-50 p-4 text-red-800"
                 >
                     {productsError}
                 </p>
@@ -395,7 +396,7 @@ export default function Inicio() {
 
             {isModalOpen && (
                 <div
-                    className="fixed inset-0 z-20 flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4"
+                    className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4"
                     onMouseDown={(event) => {
                         if (event.target === event.currentTarget) fecharModal()
                     }}
@@ -408,7 +409,7 @@ export default function Inicio() {
                     >
                         <h2
                             id="product-modal-title"
-                            className="text-center text-2xl font-bold text-slate-900"
+                            className="text-center text-2xl font-bold text-slate-800"
                         >
                             {editingProductId ? "Editar produto" : "Adicionar produto"}
                         </h2>
@@ -431,7 +432,7 @@ export default function Inicio() {
                                     accept="image/*"
                                     required={!form.image}
                                     onChange={tratarAlteracaoDaImagem}
-                                    className="block w-full rounded-lg border border-slate-300 text-sm text-slate-600 file:mr-4 file:border-0 file:bg-blue-50 file:px-4 file:py-3 file:font-medium file:text-blue-700 hover:file:bg-blue-100"
+                                    className="block w-full rounded-lg border border-slate-300 text-sm text-slate-600 file:mr-4 file:border-0 file:bg-indigo-50 file:px-4 file:py-3 file:font-medium file:text-indigo-700 hover:file:bg-indigo-100"
                                 />
                                 {imageError && (
                                     <p role="alert" className="mt-2 text-sm text-red-600">
@@ -464,7 +465,7 @@ export default function Inicio() {
                                     placeholder="Ex.: Camiseta básica"
                                     required
                                     maxLength={80}
-                                    className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                    className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-800 outline-none transition focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
                                 />
                             </div>
 
@@ -485,7 +486,7 @@ export default function Inicio() {
                                     placeholder="Ex.: Roupas, Acessórios"
                                     required
                                     maxLength={40}
-                                    className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                    className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-800 outline-none transition focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
                                 />
                             </div>
 
@@ -506,7 +507,7 @@ export default function Inicio() {
                                     required
                                     rows={3}
                                     maxLength={500}
-                                    className="w-full resize-y rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                    className="w-full resize-y rounded-lg border border-slate-300 px-4 py-3 text-slate-800 outline-none transition focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
                                 />
                             </div>
 
@@ -528,7 +529,7 @@ export default function Inicio() {
                                     min="0"
                                     step="0.01"
                                     required
-                                    className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                    className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-800 outline-none transition focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
                                 />
                             </div>
 
@@ -548,7 +549,7 @@ export default function Inicio() {
                                         isLoadingImage ||
                                         isSubmittingProduct
                                     }
-                                    className="rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="rounded-lg bg-indigo-700 px-5 py-3 font-semibold text-white transition hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     {isSubmittingProduct
                                         ? "Salvando..."
@@ -562,6 +563,7 @@ export default function Inicio() {
                 </div>
             )}
 
+          </div>
             <BarraDeNavegacao
                 aoAdicionar={abrirModalDeCadastro}
                 aoClicarNoPerfil={tratarCliqueNoPerfil}

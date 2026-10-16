@@ -33,17 +33,17 @@ export function VisaoGeralDoPerfil({ profile }) {
                 <img
                     src={profile.image}
                     alt={`Foto de ${profile.businessName || "seu comércio"}`}
-                    className="mx-auto h-32 w-32 rounded-full object-cover ring-4 ring-blue-50"
+                    className="mx-auto h-32 w-32 rounded-full object-cover ring-4 ring-indigo-100"
                 />
             ) : (
                 <div
                     aria-label="Nenhuma foto cadastrada"
-                    className="mx-auto flex h-32 w-32 items-center justify-center rounded-full bg-blue-50 text-blue-600 ring-4 ring-blue-50"
+                    className="mx-auto flex h-32 w-32 items-center justify-center rounded-full bg-indigo-50 text-indigo-700 ring-4 ring-indigo-100"
                 >
                     <VscAccount aria-hidden="true" className="text-5xl" />
                 </div>
             )}
-            <h2 className="mt-5 text-2xl font-bold text-slate-900">
+            <h2 className="mt-5 text-2xl font-bold text-slate-800">
                 {profile.businessName || "Nome do comércio"}
             </h2>
 
@@ -67,14 +67,21 @@ export function VisaoGeralDoPerfil({ profile }) {
                         type="button"
                         onClick={copiarLinkDaLoja}
                         disabled={!storeLink}
-                        className="flex items-center justify-center gap-2 rounded-lg border border-blue-200 px-4 py-3 text-sm font-medium text-blue-700 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex items-center justify-center gap-2 rounded-lg border border-indigo-200 px-4 py-3 text-sm font-medium text-indigo-700 transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         <VscCopy aria-hidden="true" />
                         Copiar link
                     </button>
                 </div>
                 {message && (
-                    <p role="status" className="mt-2 text-sm text-blue-700">
+                    <p
+                        role="status"
+                        className={`mt-2 text-sm ${
+                            message.startsWith("Não foi possível")
+                                ? "text-red-700"
+                                : "text-green-700"
+                        }`}
+                    >
                         {message}
                     </p>
                 )}
@@ -149,7 +156,7 @@ export function ConfiguracoesDaConta({ profile, email = "", aoSalvarDados }) {
 
     return (
         <section className="mx-auto max-w-2xl rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
-            <h2 className="text-center text-xl font-semibold text-slate-900">
+            <h2 className="text-center text-xl font-semibold text-slate-800">
                 Dados da conta
             </h2>
             <form onSubmit={tratarEnvio} className="mt-6 space-y-5">
@@ -173,10 +180,10 @@ export function ConfiguracoesDaConta({ profile, email = "", aoSalvarDados }) {
                         <img
                             src={fotoPreview}
                             alt={`Foto de ${profile.businessName || "seu comércio"}`}
-                            className="h-28 w-28 rounded-full object-cover ring-4 ring-blue-50"
+                            className="h-28 w-28 rounded-full object-cover ring-4 ring-indigo-100"
                         />
                     ) : (
-                        <div className="flex h-28 w-28 items-center justify-center rounded-full bg-blue-50 text-blue-600 ring-4 ring-blue-50">
+                        <div className="flex h-28 w-28 items-center justify-center rounded-full bg-indigo-50 text-indigo-700 ring-4 ring-indigo-100">
                             <VscAccount aria-hidden="true" className="text-5xl" />
                         </div>
                     )}
@@ -193,7 +200,7 @@ export function ConfiguracoesDaConta({ profile, email = "", aoSalvarDados }) {
                         type="file"
                         accept="image/*"
                         onChange={tratarSelecaoDeFoto}
-                        className="block w-full rounded-lg border border-slate-300 text-sm text-slate-600 file:mr-4 file:border-0 file:bg-blue-50 file:px-4 file:py-3 file:font-medium file:text-blue-700 hover:file:bg-blue-100"
+                        className="block w-full rounded-lg border border-slate-300 text-sm text-slate-600 file:mr-4 file:border-0 file:bg-indigo-50 file:px-4 file:py-3 file:font-medium file:text-indigo-700 hover:file:bg-indigo-100"
                     />
                 </div>
                 <div>
@@ -209,7 +216,7 @@ export function ConfiguracoesDaConta({ profile, email = "", aoSalvarDados }) {
                         value={nomeLoja}
                         onChange={(event) => setNomeLoja(event.target.value)}
                         required
-                        className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-800 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
                     />
                 </div>
                 <div>
@@ -226,15 +233,15 @@ export function ConfiguracoesDaConta({ profile, email = "", aoSalvarDados }) {
                         onChange={(event) => setContato(event.target.value)}
                         required
                         minLength={13}
-                        className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-800 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
                     />
                 </div>
                 {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
-                {message && <p role="status" className="text-sm text-blue-700">{message}</p>}
+                {message && <p role="status" className="text-sm text-green-700">{message}</p>}
                 <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-full rounded-lg bg-indigo-700 px-5 py-3 font-semibold text-white transition hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     {isSubmitting ? "Salvando..." : "Salvar dados da conta"}
                 </button>
@@ -288,7 +295,7 @@ export function ConfiguracoesDeAcesso({ email, aoSalvarLogin }) {
 
     return (
         <section className="mx-auto max-w-2xl rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
-            <h2 className="text-center text-xl font-semibold text-slate-900">
+            <h2 className="text-center text-xl font-semibold text-slate-800">
                 Alterar dados de login
             </h2>
             <p className="mt-2 text-center text-sm text-slate-500">
@@ -310,7 +317,7 @@ export function ConfiguracoesDeAcesso({ email, aoSalvarLogin }) {
                         value={loginEmail}
                         onChange={(event) => setLoginEmail(event.target.value)}
                         placeholder="voce@exemplo.com"
-                        className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-800 outline-none transition focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
                     />
                 </div>
                 <div>
@@ -328,7 +335,7 @@ export function ConfiguracoesDeAcesso({ email, aoSalvarLogin }) {
                         onChange={(event) => setNewPassword(event.target.value)}
                         placeholder="Mínimo de 8 caracteres"
                         minLength={8}
-                        className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-800 outline-none transition focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
                     />
                 </div>
                 <div>
@@ -345,7 +352,7 @@ export function ConfiguracoesDeAcesso({ email, aoSalvarLogin }) {
                         value={confirmPassword}
                         onChange={(event) => setConfirmPassword(event.target.value)}
                         placeholder="Digite novamente a nova senha"
-                        className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-800 outline-none transition focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
                     />
                 </div>
                 {error && (
@@ -354,14 +361,14 @@ export function ConfiguracoesDeAcesso({ email, aoSalvarLogin }) {
                     </p>
                 )}
                 {message && (
-                    <p role="status" className="text-sm text-blue-700">
+                    <p role="status" className="text-sm text-green-700">
                         {message}
                     </p>
                 )}
                 <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full rounded-lg border border-blue-200 px-5 py-3 font-semibold text-blue-700 transition hover:bg-blue-50"
+                    className="w-full rounded-lg border border-indigo-200 px-5 py-3 font-semibold text-indigo-700 transition hover:bg-indigo-50"
                 >
                     {isSubmitting ? "Salvando..." : "Salvar dados de login"}
                 </button>
@@ -376,37 +383,39 @@ export default function PerfilDaLoja({ aoSair }) {
     // Aplica o destaque visual ao link da seção atual do perfil.
     const classeDoLinkDeNavegacao = ({ isActive }) =>
         `block rounded-lg px-4 py-3 font-medium transition ${
-            isActive ? "bg-blue-50 text-blue-700" : "text-slate-700 hover:bg-slate-100"
+            isActive ? "bg-indigo-50 text-indigo-700" : "text-slate-700 hover:bg-indigo-50"
         }`
 
     return (
         <div>
-            <header className="bg-blue-700 px-6 py-8 text-center text-white shadow-md">
+            <header className="bg-indigo-700 px-6 py-8 text-center text-white shadow-sm">
                 <div className="mx-auto max-w-6xl">
-                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-200">
+                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-100">
                         Vitrine virtual
                     </p>
                     <h1 className="mt-2 text-3xl font-bold sm:text-4xl">
                         Perfil do comércio
                     </h1>
-                    <p className="mt-2 text-blue-100">
+                    <p className="mt-2 text-indigo-100">
                         Consulte os dados e gerencie as configurações da sua loja.
                     </p>
                 </div>
             </header>
 
             <div className="mx-auto max-w-6xl px-6 pt-6">
-                <button
-                    type="button"
-                    onClick={() => setIsMenuOpen(true)}
-                    aria-label="Abrir menu do perfil"
-                    aria-expanded={isMenuOpen}
-                    aria-controls="profile-menu"
-                    className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-3 font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                    <VscMenu aria-hidden="true" className="text-xl" />
-                    Menu do perfil
-                </button>
+                <div className="mx-auto max-w-2xl">
+                    <button
+                        type="button"
+                        onClick={() => setIsMenuOpen(true)}
+                        aria-label="Abrir menu do perfil"
+                        aria-expanded={isMenuOpen}
+                        aria-controls="profile-menu"
+                        className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-3 font-medium text-slate-700 shadow-sm transition hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                        <VscMenu aria-hidden="true" className="text-xl" />
+                        Menu do perfil
+                    </button>
+                </div>
             </div>
 
             {isMenuOpen && (
@@ -423,7 +432,7 @@ export default function PerfilDaLoja({ aoSair }) {
                         className="profile-menu-panel relative h-full w-72 max-w-[85vw] bg-white p-6 shadow-2xl"
                     >
                         <div className="flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-slate-900">
+                            <h2 className="text-lg font-semibold text-slate-800">
                                 Menu do perfil
                             </h2>
                             <button

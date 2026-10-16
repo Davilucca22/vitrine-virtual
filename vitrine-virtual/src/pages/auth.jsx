@@ -6,18 +6,18 @@ import Registro from "../APIs/Registro.js"
 import Login from "../APIs/Login.js"
 
 const inputClassName =
-    "w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+    "w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-800 outline-none transition focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
 
 // Padroniza o layout das telas de login e cadastro.
 function LayoutDeAutenticacao({ title, description, children }) {
     return (
-        <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10">
+        <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
             <section className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
                 <header className="text-center">
-                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-700">
+                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-700">
                         Vitrine virtual
                     </p>
-                    <h1 className="mt-2 text-3xl font-bold text-slate-900">{title}</h1>
+                    <h1 className="mt-2 text-3xl font-bold text-slate-800">{title}</h1>
                     <p className="mt-2 text-slate-600">{description}</p>
                 </header>
                 <div className="mt-8">{children}</div>
@@ -109,7 +109,7 @@ export function TelaDeLogin() {
                 <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white transition hover:bg-blue-800"
+                    className="w-full rounded-lg bg-indigo-700 px-5 py-3 font-semibold text-white transition hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                 >
                     {isSubmitting ? "Entrando..." : "Entrar"}
                 </button>
@@ -118,7 +118,7 @@ export function TelaDeLogin() {
                 Ainda não tem conta?{" "}
                 <Link
                     to="/registro"
-                    className="font-semibold text-blue-700 hover:text-blue-800"
+                    className="font-semibold text-indigo-700 hover:text-indigo-800"
                 >
                     Criar conta
                 </Link>
@@ -249,12 +249,12 @@ export function TelaDeCadastro() {
                             <img
                                 src={photoPreview}
                                 alt="Pré-visualização da foto da loja"
-                                className="h-24 w-24 rounded-full object-cover ring-4 ring-blue-50"
+                                className="h-24 w-24 rounded-full object-cover ring-4 ring-indigo-100"
                             />
                         ) : (
                             <div
                                 aria-label="Nenhuma foto selecionada"
-                                className="flex h-24 w-24 items-center justify-center rounded-full bg-blue-50 text-blue-600"
+                                className="flex h-24 w-24 items-center justify-center rounded-full bg-indigo-50 text-indigo-700"
                             >
                                 <VscAccount aria-hidden="true" className="text-4xl" />
                             </div>
@@ -265,7 +265,7 @@ export function TelaDeCadastro() {
                             type="file"
                             accept="image/*"
                             onChange={tratarAlteracaoDaFoto}
-                            className="block w-full rounded-lg border border-slate-300 text-sm text-slate-600 file:mr-4 file:border-0 file:bg-blue-50 file:px-4 file:py-3 file:font-medium file:text-blue-700 hover:file:bg-blue-100"
+                            className="block w-full rounded-lg border border-slate-300 text-sm text-slate-600 file:mr-4 file:border-0 file:bg-indigo-50 file:px-4 file:py-3 file:font-medium file:text-indigo-700 hover:file:bg-indigo-100"
                         />
                     </div>
                 </div>
@@ -354,7 +354,7 @@ export function TelaDeCadastro() {
                 <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white transition hover:bg-blue-800"
+                    className="w-full rounded-lg bg-indigo-700 px-5 py-3 font-semibold text-white transition hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                 >
                     {isSubmitting ? "Criando conta..." : "Criar conta"}
                 </button>
@@ -363,7 +363,7 @@ export function TelaDeCadastro() {
                 Já tem uma conta?{" "}
                 <Link
                     to="/login"
-                    className="font-semibold text-blue-700 hover:text-blue-800"
+                    className="font-semibold text-indigo-700 hover:text-indigo-800"
                 >
                     Entrar
                 </Link>
