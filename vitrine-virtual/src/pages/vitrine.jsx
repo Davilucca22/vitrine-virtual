@@ -231,13 +231,26 @@ export default function Vitrine() {
                                                     </button>
                                                 </div>
                                                 <div className="flex min-w-0 items-center justify-between gap-2">
-                                                    <div className="flex items-center gap-2">
+                                                    <div className="flex items-center gap-1.5">
                                                         <label
                                                             htmlFor={`quantity-${product.id}`}
                                                             className="text-xs text-slate-600 sm:text-sm"
                                                         >
                                                             Qtd.
                                                         </label>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                atualizarCarrinho(
+                                                                    product.id,
+                                                                    quantity - 1,
+                                                                )
+                                                            }
+                                                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 text-lg font-semibold text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                                                            aria-label={`Diminuir quantidade de ${product.name}`}
+                                                        >
+                                                            -
+                                                        </button>
                                                         <input
                                                             id={`quantity-${product.id}`}
                                                             type="number"
@@ -259,8 +272,21 @@ export default function Vitrine() {
                                                                     )
                                                                 }
                                                             }}
-                                                            className="w-16 rounded-lg border border-slate-300 px-2 py-1.5 text-center text-slate-800 focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/20"
+                                                            className="w-14 rounded-lg border border-slate-300 px-1 py-1.5 text-center text-slate-800 focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/20"
                                                         />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                atualizarCarrinho(
+                                                                    product.id,
+                                                                    quantity + 1,
+                                                                )
+                                                            }
+                                                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 text-lg font-semibold text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                                                            aria-label={`Aumentar quantidade de ${product.name}`}
+                                                        >
+                                                            +
+                                                        </button>
                                                     </div>
                                                     <div className="min-w-0 text-right">
                                                         <p className="truncate text-xs text-slate-500">

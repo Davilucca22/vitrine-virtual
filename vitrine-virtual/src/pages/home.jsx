@@ -79,7 +79,7 @@ function CatalogoDeProdutos({ products, aoEditar, aoExcluir, isLoading }) {
                                 <img
                                     src={product.image}
                                     alt={product.name}
-                                    className="h-56 w-full object-cover"
+                                    className="h-56 w-full object-contain bg-black/50"
                                 />
                                 <div className="p-5">
                                     <h2 className="truncate text-center text-xl font-semibold text-slate-800">
