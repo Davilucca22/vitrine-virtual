@@ -1,8 +1,8 @@
-const endpoint = `${import.meta.env.VITE_URL_SITE}/produto`
+const endpoint = import.meta.env.VITE_URL_SITE
 
-async function requisitarProduto(path = "", options = {}) {
+async function requisitar(path, options = {}, credentials = "include") {
     const response = await fetch(`${endpoint}${path}`, {
-        credentials: "include",
+        credentials,
         ...options,
     })
     const data = await response.json()
@@ -12,6 +12,14 @@ async function requisitarProduto(path = "", options = {}) {
     }
 
     return data
+}
+
+function requisitarProduto(path = "", options = {}) {
+    return requisitar(`/produto${path}`, options)
+}
+
+function requisitarVitrine(path = "", options = {}) {
+    return requisitar(`/vitrine${path}`, options, "omit")
 }
 
 function normalizarProduto(product) {
@@ -54,13 +62,13 @@ function criarFormulario(product, imageFile, id) {
     return formData
 }
 
-export async function listarProdutos(idLoja) {
+async function listarProdutosDaRota(idLoja, requisitarDaRota) {
     if (idLoja === undefined || idLoja === null || !String(idLoja).trim()) {
         throw new Error("Informe o identificador da loja para carregar os produtos.")
     }
 
     const query = new URLSearchParams({ id_loja: String(idLoja) })
-    const data = await requisitarProduto(`?${query}`)
+    const data = await requisitarDaRota(`?${query}`)
     if (!Array.isArray(data?.response)) {
         throw new Error("O servidor retornou uma lista de produtos inválida.")
     }
@@ -84,6 +92,14 @@ export async function listarProdutos(idLoja) {
         storeName,
         storeImage,
     }
+}
+
+export function listarProdutos(idLoja) {
+    return listarProdutosDaRota(idLoja, requisitarProduto)
+}
+
+export function listarProdutosDaVitrine(idLoja) {
+    return listarProdutosDaRota(idLoja, requisitarVitrine)
 }
 
 export async function criarProduto(product, imageFile) {

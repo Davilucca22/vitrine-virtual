@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { VscAccount, VscCallOutgoing } from "react-icons/vsc"
 import { useAutenticacao } from "../components/auth-context.js"
 import { useSearchParams } from "react-router-dom"
-import { listarProdutos } from "../APIs/Produto.js"
+import { listarProdutosDaVitrine } from "../APIs/Produto.js"
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -50,7 +50,7 @@ export default function Vitrine() {
             setProductsError("")
             setStoreDetails(null)
             try {
-                const catalog = await listarProdutos(idLoja)
+                const catalog = await listarProdutosDaVitrine(idLoja)
                 if (isCurrent) {
                     setProducts(catalog.products)
                     setWhatsappNumber(catalog.whatsappNumber)
