@@ -41,6 +41,18 @@ export default function Vitrine() {
     const [cart, setCart] = useState({})
     const [isCartExpanded, setIsCartExpanded] = useState(false)
     const [selectedCategory, setSelectedCategory] = useState("")
+    const [selectedProduct, setSelectedProduct] = useState(null)
+
+    useEffect(() => {
+        if (!selectedProduct) return
+
+        function handleKeyDown(event) {
+            if (event.key === "Escape") setSelectedProduct(null)
+        }
+
+        window.addEventListener("keydown", handleKeyDown)
+        return () => window.removeEventListener("keydown", handleKeyDown)
+    }, [selectedProduct])
 
     useEffect(() => {
         let isCurrent = true
@@ -113,7 +125,10 @@ export default function Vitrine() {
 
     return (
         <div className="min-h-screen bg-white">
+            {/* Contêiner geral da página da vitrine. */}
+            {/* Cabeçalho com a imagem, o nome e a apresentação da loja. */}
             <header className="bg-indigo-700 px-6 py-5 text-center text-white shadow-sm">
+                {/* Agrupa a identidade visual e as informações da loja. */}
                 <div className="mx-auto flex max-w-6xl flex-col items-center">
                     {profile.image ? (
                         <img
@@ -135,18 +150,22 @@ export default function Vitrine() {
                 </div>
             </header>
 
+            {/* Área principal com avisos, filtros, carrinho e catálogo. */}
             <main className="mx-auto max-w-6xl px-4 py-6 pb-80 sm:px-6 sm:py-8 sm:pb-80">
+                {/* Exibe falhas ocorridas ao carregar os produtos. */}
                 {productsError && (
                     <p role="alert" className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
                         {productsError}
                     </p>
                 )}
+                {/* Informa quando não há WhatsApp disponível para finalizar pedidos. */}
                 {!whatsappNumber && (
                     <p className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-center text-sm text-amber-900">
                         Não foi possível obter o WhatsApp da loja. O contato não está
                         disponível para finalizar o pedido.
                     </p>
                 )}
+                {/* Filtro para selecionar quais categorias de produtos são exibidas. */}
                 {products.length > 0 && (
                     <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
                         <label
@@ -170,6 +189,7 @@ export default function Vitrine() {
                         </select>
                     </div>
                 )}
+                {/* Carrinho fixo com resumo, itens selecionados e opção de finalizar o pedido. */}
                 <section
                     aria-label="Carrinho de compras"
                     className={`fixed inset-x-3 bottom-3 z-40 mx-auto flex w-auto max-w-md flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl transition-[max-height] duration-200 sm:inset-x-auto sm:right-6 sm:mx-0 sm:w-96 ${
@@ -211,6 +231,7 @@ export default function Vitrine() {
                                 </p>
                             ) : (
                                 <>
+                                    {/* Lista os itens do carrinho e seus controles de quantidade. */}
                                     <ul className="min-h-0 flex-1 divide-y divide-slate-200 overflow-y-auto px-4 sm:px-5">
                                         {cartItems.map(({ product, quantity }) => (
                                             <li
@@ -330,11 +351,13 @@ export default function Vitrine() {
                         </div>
                     )}
                 </section>
+                {/* Mostra o carregamento, estados vazios ou os produtos filtrados. */}
                 {isLoadingProducts ? (
                     <p role="status" className="rounded-lg bg-white p-6 text-center text-slate-600">
                         Carregando produtos...
                     </p>
                 ) : products.length === 0 ? (
+                    /* Estado vazio quando a loja não possui produtos cadastrados. */
                     <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
                         <h2 className="text-xl font-semibold text-slate-800">
                             Nenhum produto disponível
@@ -344,6 +367,7 @@ export default function Vitrine() {
                         </p>
                     </div>
                 ) : visibleProducts.length === 0 ? (
+                    /* Estado vazio quando a categoria selecionada não tem produtos. */
                     <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
                         <h2 className="text-xl font-semibold text-slate-800">
                             Nenhum produto nesta categoria
@@ -353,35 +377,43 @@ export default function Vitrine() {
                         </p>
                     </div>
                 ) : (
+                    /* Grade com os produtos disponíveis na categoria selecionada. */
                     <section
                         aria-label="Produtos da loja"
-                        className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                        className="grid grid-cols-2 gap-6 sm:grid-cols-2 lg:grid-cols-3"
                     >
                         {visibleProducts.map((product) => (
                             <article
                                 key={product.id}
-                                className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+                                className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-gray-500 shadow-sm"
                             >
                                 <img
                                     src={product.image}
                                     alt={product.name}
-                                    className="h-56 w-full object-contain object-center bg-black/50"
+                                    className=" w-full bg-black/50 object-contain lg:aspect-auto lg:h-56"
                                 />
-                                <div className="p-5">
-                                    <h2 className="truncate text-center text-xl font-semibold text-slate-800">
+                                <div className="p-3 lg:p-5">
+                                    <h2 className="line-clamp-2 min-h-10 text-center text-sm font-semibold text-slate-800 lg:truncate lg:text-xl">
                                         {product.name}
                                     </h2>
-                                    {product.category && (
-                                        <p className="mt-1 text-sm font-medium text-indigo-700">
-                                            {product.category}
-                                        </p>
-                                    )}
-                                    <p className="mt-2 min-h-12 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
-                                        {product.description}
+                                    <p className="mt-1 truncate text-center text-xs font-medium text-indigo-700 lg:text-left lg:text-sm">
+                                        {product.category || "Sem categoria"}
                                     </p>
-                                    <p className="mt-4 text-lg font-bold text-indigo-700">
+                                    <div className="mt-3 hidden lg:block">
+                                        <p className="min-h-12 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
+                                            {product.description}
+                                        </p>
+                                    </div>
+                                    <p className="mt-3 hidden text-lg font-bold text-indigo-700 lg:block">
                                         {currencyFormatter.format(product.price)}
                                     </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedProduct(product)}
+                                        className="mt-3 flex w-full items-center justify-center rounded-lg border border-indigo-700 px-2 py-2 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 lg:hidden"
+                                    >
+                                        Ver detalhes
+                                    </button>
                                     <button
                                         type="button"
                                         onClick={() =>
@@ -390,7 +422,7 @@ export default function Vitrine() {
                                                 (cart[product.id] || 0) + 1,
                                             )
                                         }
-                                        className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                                        className="mt-5 hidden w-full items-center justify-center gap-2 rounded-lg bg-indigo-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 lg:flex"
                                     >
                                         Adicionar ao carrinho
                                     </button>
@@ -400,6 +432,68 @@ export default function Vitrine() {
                     </section>
                 )}
             </main>
+            {selectedProduct && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4 lg:hidden"
+                    onMouseDown={(event) => {
+                        if (event.target === event.currentTarget) {
+                            setSelectedProduct(null)
+                        }
+                    }}
+                >
+                    <section
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="product-details-title"
+                        className="my-auto w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl"
+                    >
+                        <img
+                            src={selectedProduct.image}
+                            alt={selectedProduct.name}
+                            className="max-h-64 w-full bg-black/50 object-contain"
+                        />
+                        <div className="p-5">
+                            <h2
+                                id="product-details-title"
+                                className="text-xl font-bold text-slate-800"
+                            >
+                                {selectedProduct.name}
+                            </h2>
+                            <p className="mt-1 text-sm font-medium text-indigo-700">
+                                {selectedProduct.category || "Sem categoria"}
+                            </p>
+                            {selectedProduct.description && (
+                                <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
+                                    {selectedProduct.description}
+                                </p>
+                            )}
+                            <p className="mt-4 text-lg font-bold text-indigo-700">
+                                {currencyFormatter.format(selectedProduct.price)}
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    atualizarCarrinho(
+                                        selectedProduct.id,
+                                        (cart[selectedProduct.id] || 0) + 1,
+                                    )
+                                    setSelectedProduct(null)
+                                }}
+                                className="mt-4 flex w-full items-center justify-center rounded-lg bg-indigo-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                            >
+                                Adicionar ao carrinho
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setSelectedProduct(null)}
+                                className="mt-2 flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                            >
+                                Fechar
+                            </button>
+                        </div>
+                    </section>
+                </div>
+            )}
         </div>
     )
 }

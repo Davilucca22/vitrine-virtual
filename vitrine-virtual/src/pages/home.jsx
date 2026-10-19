@@ -34,11 +34,19 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
 })
 
 // Exibe os produtos cadastrados e oferece ações de edição e exclusão.
-function CatalogoDeProdutos({ products, aoEditar, aoExcluir, isLoading }) {
+function CatalogoDeProdutos({
+    products,
+    aoEditar,
+    aoExcluir,
+    aoVerDetalhes,
+    isLoading,
+}) {
 
     return (
         <>
+            {/* Cabeçalho que identifica a vitrine e apresenta a área de produtos. */}
             <header className="bg-indigo-700 px-6 py-6 text-white shadow-sm">
+                {/* Título e orientação para organizar os produtos cadastrados. */}
                 <div className="mx-auto max-w-6xl text-center">
                     <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-100">
                         Vitrine virtual
@@ -52,12 +60,15 @@ function CatalogoDeProdutos({ products, aoEditar, aoExcluir, isLoading }) {
                 </div>
             </header>
 
+            {/* Conteúdo principal do catálogo, com carregamento, estado vazio ou produtos. */}
             <main className="mx-auto max-w-6xl px-6 py-8">
                 {isLoading ? (
+                    /* Indicador exibido enquanto a lista de produtos é carregada. */
                     <p role="status" className="rounded-lg bg-white p-6 text-center text-slate-600">
                         Carregando produtos...
                     </p>
                 ) : products.length === 0 ? (
+                    /* Mensagem e instrução quando ainda não há produtos cadastrados. */
                     <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
                         <h2 className="text-xl font-semibold text-slate-800">
                             Sua vitrine está vazia
@@ -67,11 +78,13 @@ function CatalogoDeProdutos({ products, aoEditar, aoExcluir, isLoading }) {
                         </p>
                     </div>
                 ) : (
+                    /* Grade de produtos cadastrados, com duas colunas no mobile e três no desktop. */
                     <section
                         aria-label="Produtos cadastrados"
-                        className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                        className="grid grid-cols-2 gap-6 lg:grid-cols-3"
                     >
                         {products.map((product) => (
+                            /* Card com a foto, nome, categoria e ações do produto. */
                             <article
                                 key={product.id}
                                 className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200"
@@ -79,24 +92,30 @@ function CatalogoDeProdutos({ products, aoEditar, aoExcluir, isLoading }) {
                                 <img
                                     src={product.image}
                                     alt={product.name}
-                                    className="h-56 w-full object-contain bg-black/50"
+                                    className=" w-full bg-black/50 object-contain lg:aspect-auto lg:h-56"
                                 />
-                                <div className="p-5">
-                                    <h2 className="truncate text-center text-xl font-semibold text-slate-800">
+                                {/* Informações do produto e ações responsivas para mobile e desktop. */}
+                                <div className="p-3 lg:p-5">
+                                    <h2 className="line-clamp-2 min-h-10 text-center text-sm font-semibold text-slate-800 lg:truncate lg:text-xl">
                                         {product.name}
                                     </h2>
-                                    {product.category && (
-                                        <p className="mt-1 text-sm font-medium text-indigo-700">
-                                            {product.category}
-                                        </p>
-                                    )}
-                                    <p className="mt-2 min-h-12 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
+                                    <p className="mt-1 truncate text-center text-xs font-medium text-indigo-700 lg:text-left lg:text-sm">
+                                        {product.category || "Sem categoria"}
+                                    </p>
+                                    <p className="mt-3 hidden min-h-12 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600 lg:block">
                                         {product.description}
                                     </p>
-                                    <p className="mt-4 text-lg font-bold text-indigo-700">
+                                    <p className="mt-3 hidden text-lg font-bold text-indigo-700 lg:block">
                                         {currencyFormatter.format(product.price)}
                                     </p>
-                                    <div className="mt-5 flex gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => aoVerDetalhes(product)}
+                                        className="mt-3 flex w-full items-center justify-center rounded-lg border border-indigo-700 px-2 py-2 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 lg:hidden"
+                                    >
+                                        Ver detalhes
+                                    </button>
+                                    <div className="mt-5 hidden gap-3 lg:flex">
                                         <button
                                             type="button"
                                             onClick={() => aoEditar(product)}
@@ -133,6 +152,7 @@ export default function Inicio() {
     const [productsError, setProductsError] = useState("")
     const [isLoadingProducts, setIsLoadingProducts] = useState(true)
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [selectedProduct, setSelectedProduct] = useState(null)
     const [editingProductId, setEditingProductId] = useState(null)
     const [form, setForm] = useState(initialForm)
     const [imageFile, setImageFile] = useState(null)
@@ -184,6 +204,17 @@ export default function Inicio() {
         window.addEventListener("keydown", fecharComEsc)
         return () => window.removeEventListener("keydown", fecharComEsc)
     }, [isModalOpen])
+
+    useEffect(() => {
+        if (!selectedProduct) return undefined
+
+        function fecharDetalhesComEsc(event) {
+            if (event.key === "Escape") setSelectedProduct(null)
+        }
+
+        window.addEventListener("keydown", fecharDetalhesComEsc)
+        return () => window.removeEventListener("keydown", fecharDetalhesComEsc)
+    }, [selectedProduct])
 
     // Prepara o formulário vazio para cadastrar um produto.
     function abrirModalDeCadastro() {
@@ -347,6 +378,7 @@ export default function Inicio() {
                             products={products}
                             aoEditar={abrirModalDeEdicao}
                             aoExcluir={excluirProduto}
+                            aoVerDetalhes={setSelectedProduct}
                             isLoading={isLoadingProducts}
                         />
                     }
@@ -394,13 +426,93 @@ export default function Inicio() {
                 </p>
             )}
 
+            {selectedProduct && (
+                /* Fundo que destaca a janela de detalhes do produto no mobile. */
+                <div
+                    className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4 lg:hidden"
+                    onMouseDown={(event) => {
+                        if (event.target === event.currentTarget) {
+                            setSelectedProduct(null)
+                        }
+                    }}
+                >
+                    {/* Detalhes do produto e ações para editar ou excluir. */}
+                    <section
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="product-details-title"
+                        className="my-auto w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl"
+                    >
+                        <img
+                            src={selectedProduct.image}
+                            alt={selectedProduct.name}
+                            className="max-h-64 w-full bg-black/50 object-contain"
+                        />
+                        <div className="p-5">
+                            <h2
+                                id="product-details-title"
+                                className="text-xl font-bold text-slate-800"
+                            >
+                                {selectedProduct.name}
+                            </h2>
+                            <p className="mt-1 text-sm font-medium text-indigo-700">
+                                {selectedProduct.category || "Sem categoria"}
+                            </p>
+                            {selectedProduct.description && (
+                                <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
+                                    {selectedProduct.description}
+                                </p>
+                            )}
+                            <p className="mt-4 text-lg font-bold text-indigo-700">
+                                {currencyFormatter.format(selectedProduct.price)}
+                            </p>
+                            <div className="mt-5 flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const productToEdit = selectedProduct
+                                        setSelectedProduct(null)
+                                        abrirModalDeEdicao(productToEdit)
+                                    }}
+                                    className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-indigo-200 px-4 py-2 text-sm font-medium text-indigo-700 transition hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                                >
+                                    <VscEdit aria-hidden="true" />
+                                    Editar
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const productId = selectedProduct.id
+                                        setSelectedProduct(null)
+                                        excluirProduto(productId)
+                                    }}
+                                    className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-600"
+                                >
+                                    <VscTrash aria-hidden="true" />
+                                    Excluir
+                                </button>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setSelectedProduct(null)}
+                                className="mt-2 flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                            >
+                                Fechar
+                            </button>
+                        </div>
+                    </section>
+                </div>
+            )}
+
             {isModalOpen && (
+                /* Fundo que destaca o formulário de cadastro ou edição do produto. */
                 <div
                     className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4"
                     onMouseDown={(event) => {
                         if (event.target === event.currentTarget) fecharModal()
                     }}
                 >
+                    {/* Formulário com os campos para cadastrar ou atualizar um produto. */}
                     <section
                         role="dialog"
                         aria-modal="true"
@@ -418,6 +530,7 @@ export default function Inicio() {
                                 {productsError}
                             </p>
                         )}
+                        {/* Campos da imagem, nome, categoria, descrição e preço do produto. */}
                         <form onSubmit={tratarEnvioDoFormulario} className="mt-6 space-y-4">
                             <div>
                                 <label
@@ -533,6 +646,7 @@ export default function Inicio() {
                                 />
                             </div>
 
+                            {/* Ações para cancelar o formulário ou salvar o produto. */}
                             <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
                                 <button
                                     type="button"
@@ -564,6 +678,7 @@ export default function Inicio() {
             )}
 
           </div>
+            {/* Navegação inferior para cadastrar produtos e acessar o perfil da loja. */}
             <BarraDeNavegacao
                 aoAdicionar={abrirModalDeCadastro}
                 aoClicarNoPerfil={tratarCliqueNoPerfil}
