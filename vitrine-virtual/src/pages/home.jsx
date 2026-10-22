@@ -165,6 +165,7 @@ export default function Inicio() {
         businessName: user?.nome_loja || "",
         image: user?.foto_loja || "",
         whatsappNumber: user?.contato || "",
+        verPrecos: user?.ver_precos ?? true,
     }
 
     useEffect(() => {
@@ -341,7 +342,10 @@ export default function Inicio() {
     }
 
     async function salvarDadosDeLogin(credentials) {
-        const updatedUser = await atualizarDadosDeLogin(credentials)
+        const updatedUser = await atualizarDadosDeLogin({
+            ...credentials,
+            verPrecos: user?.ver_precos ?? true,
+        })
         atualizarUsuario(updatedUser)
     }
 

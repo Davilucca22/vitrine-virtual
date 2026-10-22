@@ -10,15 +10,25 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
 })
 
 // Monta o link do WhatsApp com o resumo e o valor total do carrinho.
-function criarLinkDoWhatsApp(phoneNumber, cartItems, total, businessName) {
+function criarLinkDoWhatsApp(
+    phoneNumber,
+    cartItems,
+    total,
+    businessName,
+    showPrices,
+) {
     const phone = String(phoneNumber || "").replace(/\D/g, "")
     const items = cartItems
         .map(
             ({ product, quantity }) =>
-                `- ${product.name} (${quantity}x ${currencyFormatter.format(product.price)}): ${currencyFormatter.format(product.price * quantity)}`,
+                showPrices
+                    ? `- ${product.name} (${quantity}x ${currencyFormatter.format(product.price)}): ${currencyFormatter.format(product.price * quantity)}`
+                    : `- ${product.name} (${quantity}x)`,
         )
         .join("\n")
-    const message = `Olá! Gostaria de fazer este pedido${businessName ? ` na ${businessName}` : ""}:\n\n${items}\n\nTotal: ${currencyFormatter.format(total)}`
+    const message = showPrices
+        ? `Olá! Gostaria de fazer este pedido${businessName ? ` na ${businessName}` : ""}:\n\n${items}\n\nTotal: ${currencyFormatter.format(total)}`
+        : `Olá! Gostaria de fazer este pedido${businessName ? ` na ${businessName}` : ""}:\n\n${items}`
     const recipient = phone ? `/${phone}` : ""
 
     return `https://wa.me${recipient}?text=${encodeURIComponent(message)}`
@@ -32,6 +42,7 @@ export default function Vitrine() {
     const [products, setProducts] = useState([])
     const [whatsappNumber, setWhatsappNumber] = useState("")
     const [storeDetails, setStoreDetails] = useState(null)
+    const [showPrices, setShowPrices] = useState(true)
     const [productsError, setProductsError] = useState("")
     const [isLoadingProducts, setIsLoadingProducts] = useState(true)
     const profile = storeDetails || {
@@ -66,6 +77,7 @@ export default function Vitrine() {
                 if (isCurrent) {
                     setProducts(catalog.products)
                     setWhatsappNumber(catalog.whatsappNumber)
+                    setShowPrices(catalog.verPrecos)
                     setStoreDetails({
                         businessName: catalog.storeName,
                         image: catalog.storeImage,
@@ -102,7 +114,8 @@ export default function Vitrine() {
             quantity: cart[product.id],
         }))
     const cartTotal = cartItems.reduce(
-        (total, { product, quantity }) => total + product.price * quantity,
+        (total, { product, quantity }) =>
+            showPrices ? total + product.price * quantity : total,
         0,
     )
     const cartQuantity = cartItems.reduce(
@@ -213,9 +226,11 @@ export default function Vitrine() {
                                 </span>
                             )}
                         </span>
-                        <span className="shrink-0 rounded-lg bg-indigo-50 px-3 py-2 text-sm font-bold text-indigo-700 sm:text-base">
-                            {currencyFormatter.format(cartTotal)}
-                        </span>
+                        {showPrices && (
+                            <span className="shrink-0 rounded-lg bg-indigo-50 px-3 py-2 text-sm font-bold text-indigo-700 sm:text-base">
+                                {currencyFormatter.format(cartTotal)}
+                            </span>
+                        )}
                         <span className="sr-only">
                             {isCartExpanded ? "Recolher carrinho" : "Expandir carrinho"}
                         </span>
@@ -309,17 +324,19 @@ export default function Vitrine() {
                                                             +
                                                         </button>
                                                     </div>
-                                                    <div className="min-w-0 text-right">
-                                                        <p className="truncate text-xs text-slate-500">
-                                                            {currencyFormatter.format(product.price)}{" "}
-                                                            cada
-                                                        </p>
-                                                        <p className="font-semibold text-slate-800">
-                                                            {currencyFormatter.format(
-                                                                product.price * quantity,
-                                                            )}
-                                                        </p>
-                                                    </div>
+                                                    {showPrices && (
+                                                        <div className="min-w-0 text-right">
+                                                            <p className="truncate text-xs text-slate-500">
+                                                                {currencyFormatter.format(product.price)}{" "}
+                                                                cada
+                                                            </p>
+                                                            <p className="font-semibold text-slate-800">
+                                                                {currencyFormatter.format(
+                                                                    product.price * quantity,
+                                                                )}
+                                                            </p>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </li>
                                         ))}
@@ -330,6 +347,7 @@ export default function Vitrine() {
                                             cartItems,
                                             cartTotal,
                                             profile.businessName,
+                                            showPrices,
                                         )}
                                         target="_blank"
                                         rel="noreferrer"
@@ -404,9 +422,11 @@ export default function Vitrine() {
                                             {product.description}
                                         </p>
                                     </div>
-                                    <p className="mt-3 hidden text-lg font-bold text-indigo-700 lg:block">
-                                        {currencyFormatter.format(product.price)}
-                                    </p>
+                                    {showPrices && (
+                                        <p className="mt-3 hidden text-lg font-bold text-indigo-700 lg:block">
+                                            {currencyFormatter.format(product.price)}
+                                        </p>
+                                    )}
                                     <button
                                         type="button"
                                         onClick={() => setSelectedProduct(product)}
@@ -467,9 +487,11 @@ export default function Vitrine() {
                                     {selectedProduct.description}
                                 </p>
                             )}
-                            <p className="mt-4 text-lg font-bold text-indigo-700">
-                                {currencyFormatter.format(selectedProduct.price)}
-                            </p>
+                            {showPrices && (
+                                <p className="mt-4 text-lg font-bold text-indigo-700">
+                                    {currencyFormatter.format(selectedProduct.price)}
+                                </p>
+                            )}
                             <button
                                 type="button"
                                 onClick={() => {

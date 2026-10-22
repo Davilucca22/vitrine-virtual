@@ -51,6 +51,15 @@ function normalizarProduto(product) {
     }
 }
 
+function normalizarVerPrecos(value) {
+    if (value === undefined || value === null) return true
+    if (typeof value === "boolean") return value
+    if (value === 1 || value === "1" || value === "true") return true
+    if (value === 0 || value === "0" || value === "false") return false
+
+    throw new Error("O servidor retornou uma configuração de preços inválida.")
+}
+
 function criarFormulario(product, imageFile, id) {
     const formData = new FormData()
     if (id !== undefined) formData.append("id", id)
@@ -79,6 +88,9 @@ async function listarProdutosDaRota(idLoja, requisitarDaRota) {
         data.response[0]?.nome_loja ?? data.response[0]?.NOME_LOJA ?? ""
     const storeImage =
         data.response[0]?.foto_loja ?? data.response[0]?.FOTO_LOJA ?? ""
+    const verPrecos = normalizarVerPrecos(
+        data.response[0]?.ver_precos ?? data.response[0]?.VER_PRECOS,
+    )
     if (whatsappNumber !== "" && typeof whatsappNumber !== "string") {
         throw new Error("O servidor retornou um contato de WhatsApp inválido.")
     }
@@ -91,6 +103,7 @@ async function listarProdutosDaRota(idLoja, requisitarDaRota) {
         whatsappNumber,
         storeName,
         storeImage,
+        verPrecos,
     }
 }
 

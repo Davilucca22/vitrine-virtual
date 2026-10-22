@@ -8,6 +8,7 @@ Aplicação web para lojistas criarem e administrarem uma vitrine de produtos, e
 - Login e sessão de usuário no navegador.
 - Catálogo administrativo para cadastrar, visualizar, editar e excluir produtos.
 - Gerenciamento dos dados da loja e das credenciais da conta.
+- Configuração para exibir ou ocultar os preços na vitrine pública.
 - Vitrine pública com identidade da loja, filtro por categoria e catálogo responsivo.
 - Carrinho de compras com ajuste de quantidades, cálculo do total e envio do pedido pelo WhatsApp.
 - Layout adaptado para dispositivos móveis e telas maiores.
@@ -80,7 +81,7 @@ Execute os comandos dentro da pasta `vitrine-virtual`:
 | `/register` | Visitante | Redireciona para `/registro`. |
 | `/home` | Requer autenticação | Catálogo administrativo de produtos. |
 | `/home/profile` | Requer autenticação | Visão geral dos dados da loja. |
-| `/home/profile/account` | Requer autenticação | Edição dos dados da loja e do contato. |
+| `/home/profile/account` | Requer autenticação | Edição dos dados da loja, do contato e da visibilidade dos preços. |
 | `/home/profile/login` | Requer autenticação | Atualização do email e da senha. |
 | `/vitrine?id_loja=<id>` | Pública | Vitrine pública da loja identificada por `id_loja`. |
 
@@ -112,6 +113,8 @@ A aplicação usa `VITE_URL_SITE` como URL base do backend. Os módulos de integ
 As operações da área administrativa enviam credenciais de sessão. O backend deve aceitar as requisições do frontend com cookies; para desenvolvimento em origens diferentes, configure CORS e cookies de acordo com os domínios usados. A rota pública `/vitrine` não envia credenciais.
 
 Os campos dos produtos são normalizados no frontend para `id`, `name`, `description`, `category`, `price` e `image`. A API também recebe imagens e dados de produtos em `FormData`.
+
+O formulário `PUT /user/data` envia o campo booleano `ver_precos` junto aos dados da loja. A resposta de `GET /vitrine` inclui esse campo para controlar a exibição dos preços nos cards, no carrinho e no resumo do pedido pelo WhatsApp.
 
 ## Estrutura do projeto
 

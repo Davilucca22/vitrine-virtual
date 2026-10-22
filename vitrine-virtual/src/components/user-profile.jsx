@@ -94,6 +94,7 @@ export function VisaoGeralDoPerfil({ profile }) {
 export function ConfiguracoesDaConta({ profile, email = "", aoSalvarDados }) {
     const [nomeLoja, setNomeLoja] = useState(profile.businessName)
     const [contato, setContato] = useState(profile.whatsappNumber)
+    const [verPrecos, setVerPrecos] = useState(profile.verPrecos ?? true)
     const [foto, setFoto] = useState(null)
     const [fotoPreview, setFotoPreview] = useState(profile.image)
     const fotoPreviewUrl = useRef("")
@@ -139,6 +140,7 @@ export function ConfiguracoesDaConta({ profile, email = "", aoSalvarDados }) {
                 nomeLoja: nomeLoja.trim(),
                 contato: contato.trim(),
                 foto,
+                verPrecos,
             })
             if (fotoPreviewUrl.current) {
                 URL.revokeObjectURL(fotoPreviewUrl.current)
@@ -235,6 +237,27 @@ export function ConfiguracoesDaConta({ profile, email = "", aoSalvarDados }) {
                         minLength={13}
                         className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-800 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
                     />
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <label
+                        htmlFor="account-show-prices"
+                        className="flex cursor-pointer items-start gap-3 text-sm font-medium text-slate-700"
+                    >
+                        <input
+                            id="account-show-prices"
+                            type="checkbox"
+                            checked={verPrecos}
+                            onChange={(event) => setVerPrecos(event.target.checked)}
+                            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-700 focus:ring-indigo-600"
+                        />
+                        <span>
+                            Exibir preços dos produtos no catálogo
+                            <span className="mt-1 block font-normal text-slate-500">
+                                Quando desativado, os preços não serão mostrados nos
+                                produtos nem no carrinho.
+                            </span>
+                        </span>
+                    </label>
                 </div>
                 {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
                 {message && <p role="status" className="text-sm text-green-700">{message}</p>}
