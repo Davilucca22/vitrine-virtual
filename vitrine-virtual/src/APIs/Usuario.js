@@ -23,7 +23,7 @@ function normalizarVerPrecos(value, defaultValue = true) {
     throw new Error("O servidor retornou uma configuração de preços inválida.")
 }
 
-function normalizarUsuario(user, verPrecosDefault = true) {
+export function normalizarUsuario(user, verPrecosDefault = true) {
     const id = user?.id ?? user?.ID
     const email = user?.email ?? user?.EMAIL
 
