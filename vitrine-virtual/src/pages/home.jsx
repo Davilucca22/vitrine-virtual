@@ -17,6 +17,7 @@ import {
 import PerfilDaLoja, {
     ConfiguracoesDaConta,
     ConfiguracoesDeAcesso,
+    ConfiguracoesDeCores,
     VisaoGeralDoPerfil,
 } from "../components/user-profile.jsx"
 
@@ -88,6 +89,7 @@ function CatalogoDeProdutos({
                             <article
                                 key={product.id}
                                 className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200"
+                                style={{ backgroundColor: "var(--cor-segundaria)" }}
                             >
                                 <img
                                     src={product.image}
@@ -349,6 +351,10 @@ export default function Inicio() {
         atualizarUsuario(updatedUser)
     }
 
+    async function salvarNovasCores(cores) {
+        atualizarUsuario({ cores })
+    }
+
     async function encerrarConta() {
         setLogoutError("")
         try {
@@ -408,6 +414,15 @@ export default function Inicio() {
                             <ConfiguracoesDeAcesso
                                 email={user?.email || ""}
                                 aoSalvarLogin={salvarDadosDeLogin}
+                            />
+                        }
+                    />
+                    <Route
+                        path="colors"
+                        element={
+                            <ConfiguracoesDeCores
+                                coresIniciais={user?.cores}
+                                aoAtualizarCores={salvarNovasCores}
                             />
                         }
                     />

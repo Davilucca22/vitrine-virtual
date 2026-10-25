@@ -4,7 +4,7 @@ import { VscAccount } from "react-icons/vsc"
 import { useAutenticacao } from "../components/auth-context.js"
 import Registro from "../APIs/Registro.js"
 import Login from "../APIs/Login.js"
-import { normalizarUsuario } from "../APIs/Usuario.js"
+import { normalizarUsuario, obterTokenDaResposta } from "../APIs/Usuario.js"
 
 const inputClassName =
     "w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-800 outline-none transition focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
@@ -48,7 +48,13 @@ export function TelaDeLogin() {
         setIsSubmitting(true)
         try {
             const result = await Login({ email, senha })
-            entrar(normalizarUsuario(result?.response))
+            const loginUser = result?.response
+            entrar(
+                normalizarUsuario({
+                    ...loginUser,
+                    token: obterTokenDaResposta(result),
+                }),
+            )
             navigate("/home", { replace: true })
         } catch (submitError) {
             setError(submitError.message || "Não foi possível entrar na conta. Tente novamente.")
@@ -199,7 +205,11 @@ export function TelaDeCadastro() {
                 throw new Error("O cadastro foi concluído, mas a resposta do servidor é inválida.")
             }
 
-            entrar(user)
+            entrar({
+                ...user,
+                token: obterTokenDaResposta(result),
+                cores: user.cores ?? result?.cores,
+            })
             navigate("/home", { replace: true })
         } catch (submitError) {
             setError(submitError.message || "Não foi possível criar a conta. Tente novamente.")

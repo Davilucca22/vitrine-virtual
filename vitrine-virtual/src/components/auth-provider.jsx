@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { AuthContext } from "./auth-context.js"
+import { estiloDasCores, normalizarCores } from "../constants/colors.js"
 
 const AUTH_SESSION_KEY = "vitrine-virtual:demo-session"
 
@@ -36,6 +37,13 @@ export default function ProvedorDeAutenticacao({ children }) {
         const normalizedUser = {
             ...user,
             email: user.email.trim().toLowerCase(),
+            token:
+                user.token ??
+                user.TOKEN ??
+                user.access_token ??
+                user.accessToken ??
+                user.ACCESS_TOKEN,
+            cores: normalizarCores(user),
         }
 
         try {
@@ -76,7 +84,9 @@ export default function ProvedorDeAutenticacao({ children }) {
 
     return (
         <AuthContext.Provider value={{ user, entrar, atualizarUsuario, sair }}>
-            {children}
+            <div className="app-theme" style={estiloDasCores(user?.cores)}>
+                {children}
+            </div>
         </AuthContext.Provider>
     )
 }

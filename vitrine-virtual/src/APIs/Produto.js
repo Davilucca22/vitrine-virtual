@@ -1,3 +1,5 @@
+import { normalizarCores } from "../constants/colors.js"
+
 const endpoint = import.meta.env.VITE_URL_SITE
 
 async function requisitar(path, options = {}, credentials = "include") {
@@ -103,6 +105,7 @@ async function listarProdutosDaRota(idLoja, requisitarDaRota) {
         whatsappNumber,
         storeName,
         storeImage,
+        cores: normalizarCores(data.response[0] || {}),
         verPrecos,
     }
 }

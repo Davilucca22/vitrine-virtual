@@ -8,6 +8,7 @@ Aplicação web para lojistas criarem e administrarem uma vitrine de produtos, e
 - Login e sessão de usuário no navegador.
 - Catálogo administrativo para cadastrar, visualizar, editar e excluir produtos.
 - Gerenciamento dos dados da loja e das credenciais da conta.
+- Personalização das cores da área administrativa e da vitrine pública.
 - Configuração para exibir ou ocultar os preços na vitrine pública.
 - Vitrine pública com identidade da loja, filtro por categoria e catálogo responsivo.
 - Carrinho de compras com ajuste de quantidades, cálculo do total e envio do pedido pelo WhatsApp.
@@ -83,6 +84,7 @@ Execute os comandos dentro da pasta `vitrine-virtual`:
 | `/home/profile` | Requer autenticação | Visão geral dos dados da loja. |
 | `/home/profile/account` | Requer autenticação | Edição dos dados da loja, do contato e da visibilidade dos preços. |
 | `/home/profile/login` | Requer autenticação | Atualização do email e da senha. |
+| `/home/profile/colors` | Requer autenticação | Consulta e personalização do esquema de cores da loja. |
 | `/vitrine?id_loja=<id>` | Pública | Vitrine pública da loja identificada por `id_loja`. |
 
 Na área `/home`, a navegação inferior permite adicionar produtos e acessar o perfil. No catálogo, os lojistas podem editar ou excluir produtos; em telas pequenas, os detalhes e essas ações ficam disponíveis em uma janela modal.
@@ -108,13 +110,18 @@ A aplicação usa `VITE_URL_SITE` como URL base do backend. Os módulos de integ
 | `DELETE` | `/produto?id_produto=<id>` | Excluir um produto. |
 | `PUT` | `/user/data` | Atualizar dados e foto da loja. |
 | `PUT` | `/user/login` | Atualizar email ou senha. |
+| `GET` | `/user/data/colors` | Consultar as cores da conta autenticada. |
+| `POST` | `/user/data/colors` | Criar o esquema de cores da conta. |
+| `PUT` | `/user/data/colors` | Atualizar o esquema de cores da conta. |
 | `GET` | `/vitrine?id_loja=<id>` | Obter dados públicos da loja e seus produtos. |
 
-As operações da área administrativa enviam credenciais de sessão. O backend deve aceitar as requisições do frontend com cookies; para desenvolvimento em origens diferentes, configure CORS e cookies de acordo com os domínios usados. A rota pública `/vitrine` não envia credenciais.
+O backend envia o JWT do login em cookie HttpOnly, nao no JSON. As requisicoes autenticadas enviam esse cookie automaticamente via credentials: include; o frontend nao deve ler nem enviar Authorization. Configure CORS com credenciais e os dominios corretos em desenvolvimento. A rota publica /vitrine nao envia credenciais.
 
 Os campos dos produtos são normalizados no frontend para `id`, `name`, `description`, `category`, `price` e `image`. A API também recebe imagens e dados de produtos em `FormData`.
 
 O formulário `PUT /user/data` envia o campo booleano `ver_precos` junto aos dados da loja. A resposta de `GET /vitrine` inclui esse campo para controlar a exibição dos preços nos cards, no carrinho e no resumo do pedido pelo WhatsApp.
+
+O login e a resposta de `/produto?id_loja=<id>` fornecem as cores da loja nos campos `cor_primaria`, `cor_segundaria`, `cor_texto_primaria` e `cor_texto_segundaria`. A rota `/vitrine` usa as cores retornadas com os produtos. A tela `/home/profile/colors` consulta a paleta salva e envia `POST` para criar uma configuração ou `PUT` para atualizá-la. O `GET /user/data/colors` identifica a loja pelo usuário autenticado no cookie, sem receber `id_loja` na query.
 
 ## Estrutura do projeto
 

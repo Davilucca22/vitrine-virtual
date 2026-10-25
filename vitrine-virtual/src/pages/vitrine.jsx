@@ -3,6 +3,7 @@ import { VscAccount, VscCallOutgoing } from "react-icons/vsc"
 import { useAutenticacao } from "../components/auth-context.js"
 import { useSearchParams } from "react-router-dom"
 import { listarProdutosDaVitrine } from "../APIs/Produto.js"
+import { estiloDasCores } from "../constants/colors.js"
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -49,6 +50,7 @@ export default function Vitrine() {
         businessName: user?.nome_loja || "",
         image: user?.foto_loja || "",
     }
+    const cores = storeDetails?.cores || user?.cores
     const [cart, setCart] = useState({})
     const [isCartExpanded, setIsCartExpanded] = useState(false)
     const [selectedCategory, setSelectedCategory] = useState("")
@@ -81,6 +83,7 @@ export default function Vitrine() {
                     setStoreDetails({
                         businessName: catalog.storeName,
                         image: catalog.storeImage,
+                        cores: catalog.cores,
                     })
                 }
             } catch (error) {
@@ -137,7 +140,7 @@ export default function Vitrine() {
     }
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-white" style={estiloDasCores(cores)}>
             {/* Contêiner geral da página da vitrine. */}
             {/* Cabeçalho com a imagem, o nome e a apresentação da loja. */}
             <header className="bg-indigo-700 px-6 py-5 text-center text-white shadow-sm">
@@ -404,6 +407,7 @@ export default function Vitrine() {
                             <article
                                 key={product.id}
                                 className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-gray-500 shadow-sm"
+                                style={{ backgroundColor: "var(--cor-segundaria)" }}
                             >
                                 <img
                                     src={product.image}

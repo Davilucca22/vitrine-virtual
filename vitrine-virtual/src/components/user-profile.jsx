@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react"
 import { Link, NavLink, Outlet } from "react-router-dom"
 import { VscAccount, VscClose, VscCopy, VscMenu } from "react-icons/vsc"
+import { buscarCores, salvarCores } from "../APIs/Cores.js"
+import { CORES_PADRAO, normalizarCores } from "../constants/colors.js"
 
 // Gera o endereço público da loja usando o identificador aceito pela API.
 function criarLinkDaLoja(idLoja) {
@@ -273,6 +275,165 @@ export function ConfiguracoesDaConta({ profile, email = "", aoSalvarDados }) {
     )
 }
 
+const camposDeCor = [
+    { name: "cor_primaria", label: "Cor primária" },
+    { name: "cor_segundaria", label: "Cor secundária" },
+    { name: "cor_texto_primaria", label: "Cor do texto primário" },
+    { name: "cor_texto_segundaria", label: "Cor do texto secundário" },
+]
+
+// Permite consultar e salvar a paleta de cores da conta autenticada.
+export function ConfiguracoesDeCores({ coresIniciais, aoAtualizarCores }) {
+    const [cores, setCores] = useState(() =>
+        normalizarCores(coresIniciais || CORES_PADRAO),
+    )
+    const [configurada, setConfigurada] = useState(false)
+    const [isLoading, setIsLoading] = useState(true)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [error, setError] = useState("")
+    const [message, setMessage] = useState("")
+
+    function aplicarResultadoDasCores(result) {
+        if (result.colors) setCores(result.colors)
+        setConfigurada(result.configured)
+        setError("")
+    }
+
+    async function carregarCores() {
+        try {
+            const result = await buscarCores()
+            aplicarResultadoDasCores(result)
+        } catch (loadError) {
+            setError(loadError.message || "Não foi possível carregar as cores.")
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    useEffect(() => {
+        let isCurrent = true
+        buscarCores()
+            .then((result) => {
+                if (isCurrent) {
+                    if (result.colors) setCores(result.colors)
+                    setConfigurada(result.configured)
+                    setError("")
+                }
+            })
+            .catch((loadError) => {
+                if (isCurrent) {
+                    setError(loadError.message || "Não foi possível carregar as cores.")
+                }
+            })
+            .finally(() => {
+                if (isCurrent) setIsLoading(false)
+            })
+
+        return () => {
+            isCurrent = false
+        }
+    }, [])
+
+    function alterarCor(event) {
+        setCores((current) => ({
+            ...current,
+            [event.target.name]: event.target.value,
+        }))
+        setError("")
+        setMessage("")
+    }
+
+    async function tratarEnvio(event) {
+        event.preventDefault()
+        setError("")
+        setMessage("")
+        setIsSubmitting(true)
+
+        try {
+            const savedColors = await salvarCores(cores, configurada)
+            setCores(savedColors)
+            setConfigurada(true)
+            aoAtualizarCores(savedColors)
+            setMessage("Esquema de cores atualizado.")
+        } catch (saveError) {
+            setError(saveError.message || "Não foi possível salvar as cores.")
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
+    return (
+        <section className="mx-auto max-w-2xl rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
+            <h2 className="text-center text-xl font-semibold text-slate-800">
+                Esquema de cores
+            </h2>
+            <p className="mt-2 text-center text-sm text-slate-600">
+                Personalize as cores usadas na sua área e na vitrine pública.
+            </p>
+
+            {isLoading ? (
+                <p role="status" className="mt-6 text-center text-sm text-slate-600">
+                    Carregando cores...
+                </p>
+            ) : (
+                <form onSubmit={tratarEnvio} className="mt-6 space-y-5">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        {camposDeCor.map(({ name, label }) => (
+                            <label
+                                key={name}
+                                htmlFor={name}
+                                className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3 text-sm font-medium text-slate-700"
+                            >
+                                {label}
+                                <input
+                                    id={name}
+                                    name={name}
+                                    type="color"
+                                    value={cores[name]}
+                                    onChange={alterarCor}
+                                    className="h-10 w-14 cursor-pointer rounded border-0 bg-transparent p-0"
+                                />
+                            </label>
+                        ))}
+                    </div>
+                    {error && (
+                        <div>
+                            <p role="alert" className="text-sm text-red-700">
+                                {error}
+                            </p>
+                            {!configurada && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setError("")
+                                        setIsLoading(true)
+                                        carregarCores()
+                                    }}
+                                    className="mt-2 text-sm font-medium text-indigo-700 underline"
+                                >
+                                    Tentar carregar novamente
+                                </button>
+                            )}
+                        </div>
+                    )}
+                    {message && (
+                        <p role="status" className="text-sm text-green-700">
+                            {message}
+                        </p>
+                    )}
+                    <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="w-full rounded-lg bg-indigo-700 px-5 py-3 font-semibold text-white transition hover:bg-indigo-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        {isSubmitting ? "Salvando..." : "Salvar esquema de cores"}
+                    </button>
+                </form>
+            )}
+        </section>
+    )
+}
+
 // Permite atualizar o email de acesso e a senha da conta.
 export function ConfiguracoesDeAcesso({ email, aoSalvarLogin }) {
     const [loginEmail, setLoginEmail] = useState(email)
@@ -489,6 +650,13 @@ export default function PerfilDaLoja({ aoSair }) {
                                 className={classeDoLinkDeNavegacao}
                             >
                                 Alterar dados de login
+                            </NavLink>
+                            <NavLink
+                                to="/home/profile/colors"
+                                onClick={() => setIsMenuOpen(false)}
+                                className={classeDoLinkDeNavegacao}
+                            >
+                                Esquema de cores
                             </NavLink>
                             <button
                                 type="button"

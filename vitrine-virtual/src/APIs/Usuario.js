@@ -1,4 +1,26 @@
+import { normalizarCores } from "../constants/colors.js"
+
 const endpoint = import.meta.env.VITE_URL_SITE
+const CAMPOS_TOKEN = ["token", "TOKEN", "access_token", "accessToken", "ACCESS_TOKEN"]
+
+function obterTokenDoObjeto(value) {
+    if (!value || typeof value !== "object") return undefined
+
+    for (const field of CAMPOS_TOKEN) {
+        const token = value[field]
+        if (typeof token === "string" && token.trim()) return token.trim()
+    }
+
+    return undefined
+}
+
+export function obterTokenDaResposta(data) {
+    const response = Array.isArray(data?.response)
+        ? data.response[0]
+        : data?.response
+
+    return obterTokenDoObjeto(response) ?? obterTokenDoObjeto(data)
+}
 
 async function requisitarUsuario(path, options) {
     const response = await fetch(`${endpoint}${path}`, {
@@ -26,6 +48,20 @@ function normalizarVerPrecos(value, defaultValue = true) {
 export function normalizarUsuario(user, verPrecosDefault = true) {
     const id = user?.id ?? user?.ID
     const email = user?.email ?? user?.EMAIL
+    const token = obterTokenDoObjeto(user)
+    const colorData = user?.cores ?? user
+    const hasColors =
+        colorData &&
+        [
+            "cor_primaria",
+            "cor_segundaria",
+            "cor_texto_primaria",
+            "cor_texto_segundaria",
+        ].some(
+            (field) =>
+                colorData[field] !== undefined ||
+                colorData[field.toUpperCase()] !== undefined,
+        )
 
     if (id === undefined || typeof email !== "string") {
         throw new Error("O servidor retornou dados de conta inválidos.")
@@ -34,10 +70,12 @@ export function normalizarUsuario(user, verPrecosDefault = true) {
     return {
         id: String(id),
         email,
+        ...(token ? { token } : {}),
         nome_loja: user.nome_loja ?? user.NOME_LOJA ?? "",
         foto_loja: user.foto_loja ?? user.FOTO_LOJA ?? "",
         contato: user.contato ?? user.CONTATO ?? "",
         status: user.status ?? user.STATUS,
+        ...(hasColors ? { cores: normalizarCores(colorData) } : {}),
         ver_precos: normalizarVerPrecos(
             user.ver_precos ?? user.VER_PRECOS,
             verPrecosDefault,
