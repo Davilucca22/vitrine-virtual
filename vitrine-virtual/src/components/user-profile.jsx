@@ -97,7 +97,10 @@ export function ConfiguracoesDaConta({ profile, email = "", aoSalvarDados }) {
     const [verPrecos, setVerPrecos] = useState(profile.verPrecos ?? true)
     const [foto, setFoto] = useState(null)
     const [fotoPreview, setFotoPreview] = useState(profile.image)
+    const [banner, setBanner] = useState(null)
+    const [bannerPreview, setBannerPreview] = useState(profile.banner)
     const fotoPreviewUrl = useRef("")
+    const bannerPreviewUrl = useRef("")
     const [error, setError] = useState("")
     const [message, setMessage] = useState("")
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -106,6 +109,9 @@ export function ConfiguracoesDaConta({ profile, email = "", aoSalvarDados }) {
         return () => {
             if (fotoPreviewUrl.current) {
                 URL.revokeObjectURL(fotoPreviewUrl.current)
+            }
+            if (bannerPreviewUrl.current) {
+                URL.revokeObjectURL(bannerPreviewUrl.current)
             }
         }
     }, [])
@@ -127,7 +133,25 @@ export function ConfiguracoesDaConta({ profile, email = "", aoSalvarDados }) {
         fotoPreviewUrl.current = URL.createObjectURL(file)
         setFoto(file)
         setFotoPreview(fotoPreviewUrl.current)
-        setFoto(file)
+    }
+
+    function tratarSelecaoDeBanner(event) {
+        const file = event.target.files?.[0]
+        setError("")
+        setMessage("")
+        if (!file) return
+        if (!file.type.startsWith("image/")) {
+            setError("Selecione um arquivo de imagem válido.")
+            event.target.value = ""
+            return
+        }
+
+        if (bannerPreviewUrl.current) {
+            URL.revokeObjectURL(bannerPreviewUrl.current)
+        }
+        bannerPreviewUrl.current = URL.createObjectURL(file)
+        setBanner(file)
+        setBannerPreview(bannerPreviewUrl.current)
     }
 
     async function tratarEnvio(event) {
@@ -140,14 +164,21 @@ export function ConfiguracoesDaConta({ profile, email = "", aoSalvarDados }) {
                 nomeLoja: nomeLoja.trim(),
                 contato: contato.trim(),
                 foto,
+                banner,
                 verPrecos,
             })
             if (fotoPreviewUrl.current) {
                 URL.revokeObjectURL(fotoPreviewUrl.current)
                 fotoPreviewUrl.current = ""
             }
+            if (bannerPreviewUrl.current) {
+                URL.revokeObjectURL(bannerPreviewUrl.current)
+                bannerPreviewUrl.current = ""
+            }
             setFoto(null)
+            setBanner(null)
             setFotoPreview(updatedUser.foto_loja)
+            setBannerPreview(updatedUser.banner)
             setMessage("Dados da conta atualizados.")
         } catch (submitError) {
             setError(submitError.message || "Não foi possível atualizar os dados.")
@@ -202,6 +233,35 @@ export function ConfiguracoesDaConta({ profile, email = "", aoSalvarDados }) {
                         type="file"
                         accept="image/*"
                         onChange={tratarSelecaoDeFoto}
+                        className="block w-full rounded-lg border border-slate-300 text-sm text-slate-600 file:mr-4 file:border-0 file:bg-indigo-50 file:px-4 file:py-3 file:font-medium file:text-indigo-700 hover:file:bg-indigo-100"
+                    />
+                </div>
+                <div>
+                    <label
+                        htmlFor="business-banner"
+                        className="mb-2 block text-sm font-medium text-slate-700"
+                    >
+                        Banner do comércio
+                    </label>
+                    {bannerPreview ? (
+                        <img
+                            src={bannerPreview}
+                            alt={`Pré-visualização do banner de ${profile.businessName || "seu comércio"}`}
+                            className="mb-3 h-40 w-full rounded-lg object-cover ring-1 ring-slate-200"
+                        />
+                    ) : (
+                        <div
+                            aria-label="Nenhum banner cadastrado"
+                            className="mb-3 flex h-40 w-full items-center justify-center rounded-lg bg-slate-100 text-sm text-slate-500 ring-1 ring-slate-200"
+                        >
+                            Nenhum banner cadastrado
+                        </div>
+                    )}
+                    <input
+                        id="business-banner"
+                        type="file"
+                        accept="image/*"
+                        onChange={tratarSelecaoDeBanner}
                         className="block w-full rounded-lg border border-slate-300 text-sm text-slate-600 file:mr-4 file:border-0 file:bg-indigo-50 file:px-4 file:py-3 file:font-medium file:text-indigo-700 hover:file:bg-indigo-100"
                     />
                 </div>

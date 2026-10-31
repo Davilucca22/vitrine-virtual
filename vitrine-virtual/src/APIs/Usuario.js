@@ -36,6 +36,7 @@ export function normalizarUsuario(user, verPrecosDefault = true) {
         email,
         nome_loja: user.nome_loja ?? user.NOME_LOJA ?? "",
         foto_loja: user.foto_loja ?? user.FOTO_LOJA ?? "",
+        banner: user.banner ?? user.BANNER ?? "",
         contato: user.contato ?? user.CONTATO ?? "",
         status: user.status ?? user.STATUS,
         ver_precos: normalizarVerPrecos(
@@ -60,6 +61,7 @@ export async function atualizarDadosDaConta({
     nomeLoja,
     contato,
     foto,
+    banner,
     verPrecos,
 }) {
     const formData = new FormData()
@@ -67,6 +69,7 @@ export async function atualizarDadosDaConta({
     formData.append("contato", contato)
     formData.append("ver_precos", String(verPrecos))
     if (foto) formData.append("foto", foto)
+    if (banner) formData.append("banner", banner)
 
     const data = await requisitarUsuario("/user/data", {
         method: "PUT",

@@ -164,6 +164,7 @@ export default function Inicio() {
         id: user?.id,
         businessName: user?.nome_loja || "",
         image: user?.foto_loja || "",
+        banner: user?.banner || "",
         whatsappNumber: user?.contato || "",
         verPrecos: user?.ver_precos ?? true,
     }

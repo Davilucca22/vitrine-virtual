@@ -88,13 +88,19 @@ async function listarProdutosDaRota(idLoja, requisitarDaRota) {
         data.response[0]?.nome_loja ?? data.response[0]?.NOME_LOJA ?? ""
     const storeImage =
         data.response[0]?.foto_loja ?? data.response[0]?.FOTO_LOJA ?? ""
+    const storeBanner =
+        data.response[0]?.banner ?? data.response[0]?.BANNER ?? ""
     const verPrecos = normalizarVerPrecos(
         data.response[0]?.ver_precos ?? data.response[0]?.VER_PRECOS,
     )
     if (whatsappNumber !== "" && typeof whatsappNumber !== "string") {
         throw new Error("O servidor retornou um contato de WhatsApp inválido.")
     }
-    if (typeof storeName !== "string" || typeof storeImage !== "string") {
+    if (
+        typeof storeName !== "string" ||
+        typeof storeImage !== "string" ||
+        typeof storeBanner !== "string"
+    ) {
         throw new Error("O servidor retornou dados da loja inválidos.")
     }
 
@@ -103,6 +109,7 @@ async function listarProdutosDaRota(idLoja, requisitarDaRota) {
         whatsappNumber,
         storeName,
         storeImage,
+        storeBanner,
         verPrecos,
     }
 }

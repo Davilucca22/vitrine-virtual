@@ -48,6 +48,7 @@ export default function Vitrine() {
     const profile = storeDetails || {
         businessName: user?.nome_loja || "",
         image: user?.foto_loja || "",
+        banner: user?.banner || "",
     }
     const [cart, setCart] = useState({})
     const [isCartExpanded, setIsCartExpanded] = useState(false)
@@ -81,6 +82,7 @@ export default function Vitrine() {
                     setStoreDetails({
                         businessName: catalog.storeName,
                         image: catalog.storeImage,
+                        banner: catalog.storeBanner,
                     })
                 }
             } catch (error) {
@@ -140,9 +142,18 @@ export default function Vitrine() {
         <div className="min-h-screen bg-white">
             {/* Contêiner geral da página da vitrine. */}
             {/* Cabeçalho com a imagem, o nome e a apresentação da loja. */}
-            <header className="bg-indigo-700 px-6 py-5 text-center text-white shadow-sm">
+            <header
+                className="bg-indigo-700 bg-cover bg-no-repeat bg-center px-6 py-5 text-center text-white shadow-sm"
+                style={
+                    profile.banner
+                        ? {
+                              backgroundImage: `linear-gradient(rgb(0 0 0 / 50%), rgb(0 0 0 / 50%)), url("${profile.banner}")`,
+                          }
+                        : undefined
+                }
+            >
                 {/* Agrupa a identidade visual e as informações da loja. */}
-                <div className="mx-auto flex max-w-6xl flex-col items-center">
+                <div className="relative mx-auto flex max-w-6xl flex-col items-center">
                     {profile.image ? (
                         <img
                             src={profile.image}
@@ -408,7 +419,7 @@ export default function Vitrine() {
                                 <img
                                     src={product.image}
                                     alt={product.name}
-                                    className=" w-full bg-black/50 object-contain lg:aspect-auto lg:h-56"
+                                    className=" w-full bg-black/50 object-contain lg:aspect-auto max-h-56"
                                 />
                                 <div className="p-3 lg:p-5">
                                     <h2 className="line-clamp-2 min-h-10 text-center text-sm font-semibold text-slate-800 lg:truncate lg:text-xl">
