@@ -28,17 +28,11 @@ const initialForm = {
     image: "",
 }
 
-const currencyFormatter = new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-})
-
 // Exibe os produtos cadastrados e oferece ações de edição e exclusão.
 function CatalogoDeProdutos({
     products,
     aoEditar,
     aoExcluir,
-    aoVerDetalhes,
     isLoading,
 }) {
 
@@ -61,7 +55,7 @@ function CatalogoDeProdutos({
             </header>
 
             {/* Conteúdo principal do catálogo, com carregamento, estado vazio ou produtos. */}
-            <main className="mx-auto max-w-6xl px-6 py-8">
+            <main className="mx-auto max-w-6xl px-6 py-8 w-screen">
                 {isLoading ? (
                     /* Indicador exibido enquanto a lista de produtos é carregada. */
                     <p role="status" className="rounded-lg bg-white p-6 text-center text-slate-600">
@@ -78,13 +72,13 @@ function CatalogoDeProdutos({
                         </p>
                     </div>
                 ) : (
-                    /* Grade de produtos cadastrados, com duas colunas no mobile e três no desktop. */
+                    /* Grade de produtos cadastrados, com quatro colunas no desktop. */
                     <section
                         aria-label="Produtos cadastrados"
-                        className="grid grid-cols-2 gap-6 lg:grid-cols-3"
+                        className="grid grid-cols-2 gap-6 lg:grid-cols-4"
                     >
                         {products.map((product) => (
-                            /* Card com a foto, nome, categoria e ações do produto. */
+                            /* Card com a foto, o nome e as ações do produto. */
                             <article
                                 key={product.id}
                                 className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200"
@@ -92,34 +86,17 @@ function CatalogoDeProdutos({
                                 <img
                                     src={product.image}
                                     alt={product.name}
-                                    className=" w-full bg-black/50 object-contain lg:aspect-auto lg:h-56"
+                                    className="aspect-auto w-full bg-slate-100 object-contain"
                                 />
-                                {/* Informações do produto e ações responsivas para mobile e desktop. */}
                                 <div className="p-3 lg:p-5">
-                                    <h2 className="line-clamp-2 min-h-10 text-center text-sm font-semibold text-slate-800 lg:truncate lg:text-xl">
+                                    <h2 className="line-clamp-2 min-h-10 text-center text-sm font-semibold text-indigo-800 lg:text-lg">
                                         {product.name}
                                     </h2>
-                                    <p className="mt-1 truncate text-center text-xs font-medium text-indigo-700 lg:text-left lg:text-sm">
-                                        {product.category || "Sem categoria"}
-                                    </p>
-                                    <p className="mt-3 hidden min-h-12 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600 lg:block">
-                                        {product.description}
-                                    </p>
-                                    <p className="mt-3 hidden text-lg font-bold text-indigo-700 lg:block">
-                                        {currencyFormatter.format(product.price)}
-                                    </p>
-                                    <button
-                                        type="button"
-                                        onClick={() => aoVerDetalhes(product)}
-                                        className="mt-3 flex w-full items-center justify-center rounded-lg border border-indigo-700 px-2 py-2 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 lg:hidden"
-                                    >
-                                        Ver detalhes
-                                    </button>
-                                    <div className="mt-5 hidden gap-3 lg:flex">
+                                    <div className="mt-4 flex gap-2 lg:gap-3">
                                         <button
                                             type="button"
                                             onClick={() => aoEditar(product)}
-                                            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-indigo-200 px-4 py-2 text-sm font-medium text-indigo-700 transition hover:bg-indigo-50"
+                                            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-indigo-200 px-2 py-2 text-xs font-medium text-indigo-700 transition hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:px-4 sm:text-sm"
                                         >
                                             <VscEdit aria-hidden="true" />
                                             Editar
@@ -127,7 +104,7 @@ function CatalogoDeProdutos({
                                         <button
                                             type="button"
                                             onClick={() => aoExcluir(product.id)}
-                                            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50"
+                                            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-red-200 px-2 py-2 text-xs font-medium text-red-700 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-600 sm:px-4 sm:text-sm"
                                         >
                                             <VscTrash aria-hidden="true" />
                                             Excluir
@@ -152,10 +129,10 @@ export default function Inicio() {
     const [productsError, setProductsError] = useState("")
     const [isLoadingProducts, setIsLoadingProducts] = useState(true)
     const [isModalOpen, setIsModalOpen] = useState(false)
-    const [selectedProduct, setSelectedProduct] = useState(null)
     const [editingProductId, setEditingProductId] = useState(null)
     const [form, setForm] = useState(initialForm)
-    const [imageFile, setImageFile] = useState(null)
+    const [imageFiles, setImageFiles] = useState([])
+    const [imagePreviews, setImagePreviews] = useState([])
     const [imageError, setImageError] = useState("")
     const [isLoadingImage, setIsLoadingImage] = useState(false)
     const [isSubmittingProduct, setIsSubmittingProduct] = useState(false)
@@ -207,23 +184,13 @@ export default function Inicio() {
         return () => window.removeEventListener("keydown", fecharComEsc)
     }, [isModalOpen])
 
-    useEffect(() => {
-        if (!selectedProduct) return undefined
-
-        function fecharDetalhesComEsc(event) {
-            if (event.key === "Escape") setSelectedProduct(null)
-        }
-
-        window.addEventListener("keydown", fecharDetalhesComEsc)
-        return () => window.removeEventListener("keydown", fecharDetalhesComEsc)
-    }, [selectedProduct])
-
     // Prepara o formulário vazio para cadastrar um produto.
     function abrirModalDeCadastro() {
         navigate("/home")
         setEditingProductId(null)
         setForm(initialForm)
-        setImageFile(null)
+        setImageFiles([])
+        setImagePreviews([])
         setImageError("")
         setIsLoadingImage(false)
         setIsModalOpen(true)
@@ -239,7 +206,8 @@ export default function Inicio() {
             price: String(product.price),
             image: product.image,
         })
-        setImageFile(null)
+        setImageFiles([])
+        setImagePreviews(product.images?.length ? product.images : [product.image])
         setImageError("")
         setIsLoadingImage(false)
         setIsModalOpen(true)
@@ -250,39 +218,65 @@ export default function Inicio() {
         setIsModalOpen(false)
         setEditingProductId(null)
         setForm(initialForm)
-        setImageFile(null)
+        setImageFiles([])
+        setImagePreviews([])
         setImageError("")
         setIsLoadingImage(false)
     }
 
     // Valida o arquivo e carrega a imagem para o formulário.
     function tratarAlteracaoDaImagem(event) {
-        const file = event.target.files?.[0]
+        const files = Array.from(event.target.files || [])
         setImageError("")
 
-        if (!file) return
+        if (files.length === 0) return
 
-        if (!file.type.startsWith("image/")) {
-            setImageError("Selecione um arquivo de imagem válido.")
+        if (files.length > 4) {
+            setImageError("Selecione no máximo 4 fotos para o produto.")
             event.target.value = ""
             return
         }
 
-        const reader = new FileReader()
-        setImageFile(file)
+        if (files.some((file) => !file.type.startsWith("image/"))) {
+            setImageError("Selecione apenas arquivos de imagem válidos.")
+            event.target.value = ""
+            return
+        }
+
+        setImageFiles(files)
         setIsLoadingImage(true)
-        setForm((currentForm) => ({ ...currentForm, image: "" }))
-        reader.onload = () => {
-            if (typeof reader.result === "string") {
-                setForm((currentForm) => ({ ...currentForm, image: reader.result }))
-            }
-            setIsLoadingImage(false)
-        }
-        reader.onerror = () => {
-            setImageError("Não foi possível carregar a imagem. Tente novamente.")
-            setIsLoadingImage(false)
-        }
-        reader.readAsDataURL(file)
+        Promise.all(
+            files.map(
+                (file) =>
+                    new Promise((resolve, reject) => {
+                        const reader = new FileReader()
+                        reader.onload = () => {
+                            if (typeof reader.result === "string") {
+                                resolve(reader.result)
+                            } else {
+                                reject(new Error("Formato de pré-visualização inválido."))
+                            }
+                        }
+                        reader.onerror = () => reject(reader.error)
+                        reader.readAsDataURL(file)
+                    }),
+            ),
+        )
+            .then((previews) => {
+                setImagePreviews(previews)
+                setForm((currentForm) => ({
+                    ...currentForm,
+                    image: previews[0] || "",
+                }))
+            })
+            .catch(() => {
+                setImageError("Não foi possível carregar as imagens. Tente novamente.")
+                setImageFiles([])
+                setImagePreviews([])
+            })
+            .finally(() => {
+                setIsLoadingImage(false)
+            })
     }
 
     // Cria ou atualiza o produto usando os valores validados do formulário.
@@ -300,8 +294,8 @@ export default function Inicio() {
         setIsSubmittingProduct(true)
         try {
             const savedProduct = editingProductId
-                ? await atualizarProduto(editingProductId, product, imageFile)
-                : await criarProduto(product, imageFile)
+                ? await atualizarProduto(editingProductId, product, imageFiles)
+                : await criarProduto(product, imageFiles)
 
             setProducts((currentProducts) =>
                 editingProductId
@@ -383,7 +377,6 @@ export default function Inicio() {
                             products={products}
                             aoEditar={abrirModalDeEdicao}
                             aoExcluir={excluirProduto}
-                            aoVerDetalhes={setSelectedProduct}
                             isLoading={isLoadingProducts}
                         />
                     }
@@ -431,84 +424,6 @@ export default function Inicio() {
                 </p>
             )}
 
-            {selectedProduct && (
-                /* Fundo que destaca a janela de detalhes do produto no mobile. */
-                <div
-                    className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4 lg:hidden"
-                    onMouseDown={(event) => {
-                        if (event.target === event.currentTarget) {
-                            setSelectedProduct(null)
-                        }
-                    }}
-                >
-                    {/* Detalhes do produto e ações para editar ou excluir. */}
-                    <section
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="product-details-title"
-                        className="my-auto w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl"
-                    >
-                        <img
-                            src={selectedProduct.image}
-                            alt={selectedProduct.name}
-                            className="max-h-64 w-full bg-black/50 object-contain"
-                        />
-                        <div className="p-5">
-                            <h2
-                                id="product-details-title"
-                                className="text-xl font-bold text-slate-800"
-                            >
-                                {selectedProduct.name}
-                            </h2>
-                            <p className="mt-1 text-sm font-medium text-indigo-700">
-                                {selectedProduct.category || "Sem categoria"}
-                            </p>
-                            {selectedProduct.description && (
-                                <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
-                                    {selectedProduct.description}
-                                </p>
-                            )}
-                            <p className="mt-4 text-lg font-bold text-indigo-700">
-                                {currencyFormatter.format(selectedProduct.price)}
-                            </p>
-                            <div className="mt-5 flex gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const productToEdit = selectedProduct
-                                        setSelectedProduct(null)
-                                        abrirModalDeEdicao(productToEdit)
-                                    }}
-                                    className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-indigo-200 px-4 py-2 text-sm font-medium text-indigo-700 transition hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-600"
-                                >
-                                    <VscEdit aria-hidden="true" />
-                                    Editar
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const productId = selectedProduct.id
-                                        setSelectedProduct(null)
-                                        excluirProduto(productId)
-                                    }}
-                                    className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-600"
-                                >
-                                    <VscTrash aria-hidden="true" />
-                                    Excluir
-                                </button>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setSelectedProduct(null)}
-                                className="mt-2 flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600"
-                            >
-                                Fechar
-                            </button>
-                        </div>
-                    </section>
-                </div>
-            )}
-
             {isModalOpen && (
                 /* Fundo que destaca o formulário de cadastro ou edição do produto. */
                 <div
@@ -542,27 +457,36 @@ export default function Inicio() {
                                     htmlFor="product-image"
                                     className="mb-2 block text-sm font-medium text-slate-700"
                                 >
-                                    Foto do produto
+                                    Fotos do produto (até 4)
                                 </label>
                                 <input
                                     id="product-image"
                                     type="file"
                                     accept="image/*"
+                                    multiple
                                     required={!form.image}
                                     onChange={tratarAlteracaoDaImagem}
                                     className="block w-full rounded-lg border border-slate-300 text-sm text-slate-600 file:mr-4 file:border-0 file:bg-indigo-50 file:px-4 file:py-3 file:font-medium file:text-indigo-700 hover:file:bg-indigo-100"
                                 />
+                                <p className="mt-1 text-xs text-slate-500">
+                                    Selecione até 4 fotos. Na edição, novas fotos substituem as atuais.
+                                </p>
                                 {imageError && (
                                     <p role="alert" className="mt-2 text-sm text-red-600">
                                         {imageError}
                                     </p>
                                 )}
-                                {form.image && (
-                                    <img
-                                        src={form.image}
-                                        alt="Pré-visualização do produto"
-                                        className="mt-4 h-48 w-full rounded-xl object-cover"
-                                    />
+                                {imagePreviews.length > 0 && (
+                                    <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                                        {imagePreviews.map((image, index) => (
+                                            <img
+                                                key={`${index}-${image}`}
+                                                src={image}
+                                                alt={`Pré-visualização ${index + 1} do produto`}
+                                                className="aspect-square w-full rounded-xl object-cover"
+                                            />
+                                        ))}
+                                    </div>
                                 )}
                             </div>
 

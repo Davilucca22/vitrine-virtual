@@ -1,5 +1,10 @@
-import { useEffect, useState } from "react"
-import { VscAccount, VscCallOutgoing } from "react-icons/vsc"
+import { useEffect, useRef, useState } from "react"
+import {
+    VscAccount,
+    VscCallOutgoing,
+    VscChevronLeft,
+    VscChevronRight,
+} from "react-icons/vsc"
 import { useAutenticacao } from "../components/auth-context.js"
 import { useSearchParams } from "react-router-dom"
 import { listarProdutosDaVitrine } from "../APIs/Produto.js"
@@ -54,17 +59,44 @@ export default function Vitrine() {
     const [isCartExpanded, setIsCartExpanded] = useState(false)
     const [selectedCategory, setSelectedCategory] = useState("")
     const [selectedProduct, setSelectedProduct] = useState(null)
+    const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+    const touchStartPosition = useRef(null)
+    const selectedImages = selectedProduct?.images?.length
+        ? selectedProduct.images
+        : selectedProduct?.image
+          ? [selectedProduct.image]
+          : []
+
+    function navegarImagem(direction) {
+        if (selectedImages.length < 2) return
+        setSelectedImageIndex(
+            (currentIndex) =>
+                (currentIndex + direction + selectedImages.length) %
+                selectedImages.length,
+        )
+    }
 
     useEffect(() => {
         if (!selectedProduct) return
 
+        const imageCount = selectedImages.length
         function handleKeyDown(event) {
             if (event.key === "Escape") setSelectedProduct(null)
+            if (imageCount > 1 && event.key === "ArrowLeft") {
+                setSelectedImageIndex(
+                    (currentIndex) => (currentIndex - 1 + imageCount) % imageCount,
+                )
+            }
+            if (imageCount > 1 && event.key === "ArrowRight") {
+                setSelectedImageIndex(
+                    (currentIndex) => (currentIndex + 1) % imageCount,
+                )
+            }
         }
 
         window.addEventListener("keydown", handleKeyDown)
         return () => window.removeEventListener("keydown", handleKeyDown)
-    }, [selectedProduct])
+    }, [selectedProduct, selectedImages.length])
 
     useEffect(() => {
         let isCurrent = true
@@ -409,7 +441,7 @@ export default function Vitrine() {
                     /* Grade com os produtos disponíveis na categoria selecionada. */
                     <section
                         aria-label="Produtos da loja"
-                        className="grid grid-cols-2 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                        className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4"
                     >
                         {visibleProducts.map((product) => (
                             <article
@@ -419,43 +451,21 @@ export default function Vitrine() {
                                 <img
                                     src={product.image}
                                     alt={product.name}
-                                    className=" w-full bg-black/50 object-contain lg:aspect-auto max-h-56"
+                                    className="aspect-square w-full bg-slate-100 object-cover"
                                 />
                                 <div className="p-3 lg:p-5">
-                                    <h2 className="line-clamp-2 min-h-10 text-center text-sm font-semibold text-slate-800 lg:truncate lg:text-xl">
+                                    <h2 className="line-clamp-2 min-h-10 text-center text-sm font-semibold text-slate-800 lg:text-lg">
                                         {product.name}
                                     </h2>
-                                    <p className="mt-1 truncate text-center text-xs font-medium text-indigo-700 lg:text-left lg:text-sm">
-                                        {product.category || "Sem categoria"}
-                                    </p>
-                                    <div className="mt-3 hidden lg:block">
-                                        <p className="min-h-12 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
-                                            {product.description}
-                                        </p>
-                                    </div>
-                                    {showPrices && (
-                                        <p className="mt-3 hidden text-lg font-bold text-indigo-700 lg:block">
-                                            {currencyFormatter.format(product.price)}
-                                        </p>
-                                    )}
                                     <button
                                         type="button"
-                                        onClick={() => setSelectedProduct(product)}
-                                        className="mt-3 flex w-full items-center justify-center rounded-lg border border-indigo-700 px-2 py-2 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 lg:hidden"
+                                        onClick={() => {
+                                            setSelectedImageIndex(0)
+                                            setSelectedProduct(product)
+                                        }}
+                                        className="mt-3 flex w-full items-center justify-center rounded-lg border border-indigo-700 px-2 py-2 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 sm:text-sm"
                                     >
                                         Ver detalhes
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            atualizarCarrinho(
-                                                product.id,
-                                                (cart[product.id] || 0) + 1,
-                                            )
-                                        }
-                                        className="mt-5 hidden w-full items-center justify-center gap-2 rounded-lg bg-indigo-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 lg:flex"
-                                    >
-                                        Adicionar ao carrinho
                                     </button>
                                 </div>
                             </article>
@@ -465,7 +475,7 @@ export default function Vitrine() {
             </main>
             {selectedProduct && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4 lg:hidden"
+                    className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4"
                     onMouseDown={(event) => {
                         if (event.target === event.currentTarget) {
                             setSelectedProduct(null)
@@ -476,33 +486,92 @@ export default function Vitrine() {
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="product-details-title"
-                        className="my-auto w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl"
+                        className="my-auto flex w-full max-w-5xl flex-col overflow-y-auto rounded-2xl bg-white shadow-2xl lg:h-[min(80vh,42rem)] lg:max-h-[90vh] lg:flex-row lg:overflow-hidden"
                     >
-                        <img
-                            src={selectedProduct.image}
-                            alt={selectedProduct.name}
-                            className="max-h-64 w-full bg-black/50 object-contain"
-                        />
-                        <div className="p-5">
-                            <h2
-                                id="product-details-title"
-                                className="text-xl font-bold text-slate-800"
-                            >
-                                {selectedProduct.name}
-                            </h2>
-                            <p className="mt-1 text-sm font-medium text-indigo-700">
-                                {selectedProduct.category || "Sem categoria"}
-                            </p>
-                            {selectedProduct.description && (
-                                <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
-                                    {selectedProduct.description}
-                                </p>
+                        <div
+                            className="relative flex aspect-square w-full flex-none items-center justify-center bg-slate-100 lg:aspect-auto lg:h-full lg:w-1/2"
+                            onTouchStart={(event) => {
+                                const touch = event.touches[0]
+                                touchStartPosition.current = {
+                                    x: touch.clientX,
+                                    y: touch.clientY,
+                                }
+                            }}
+                            onTouchEnd={(event) => {
+                                const start = touchStartPosition.current
+                                const touch = event.changedTouches[0]
+                                touchStartPosition.current = null
+                                if (!start || !touch) return
+
+                                const deltaX = touch.clientX - start.x
+                                const deltaY = touch.clientY - start.y
+                                if (
+                                    Math.abs(deltaX) > 40 &&
+                                    Math.abs(deltaX) > Math.abs(deltaY)
+                                ) {
+                                    navegarImagem(deltaX < 0 ? 1 : -1)
+                                }
+                            }}
+                        >
+                            {selectedImages.length > 0 && (
+                                <img
+                                    src={selectedImages[selectedImageIndex]}
+                                    alt={`${selectedProduct.name} - foto ${selectedImageIndex + 1}`}
+                                    className="h-full w-full object-contain"
+                                />
                             )}
-                            {showPrices && (
-                                <p className="mt-4 text-lg font-bold text-indigo-700">
-                                    {currencyFormatter.format(selectedProduct.price)}
-                                </p>
+                            {selectedImages.length > 1 && (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={() => navegarImagem(-1)}
+                                        aria-label="Mostrar foto anterior"
+                                        className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-800 shadow-md transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                                    >
+                                        <VscChevronLeft aria-hidden="true" className="text-2xl" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => navegarImagem(1)}
+                                        aria-label="Mostrar próxima foto"
+                                        className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-800 shadow-md transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                                    >
+                                        <VscChevronRight aria-hidden="true" className="text-2xl" />
+                                    </button>
+                                    <span
+                                        aria-live="polite"
+                                        className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-slate-950/70 px-3 py-1 text-xs font-medium text-white"
+                                    >
+                                        {selectedImageIndex + 1} / {selectedImages.length}
+                                    </span>
+                                </>
                             )}
+                        </div>
+                        <div className="flex min-h-80 min-w-0 flex-col p-5 sm:p-8 lg:h-full lg:w-1/2 lg:min-h-0">
+                            <header className="shrink-0 rounded-xl bg-indigo-50 px-4 py-5 text-center">
+                                <h2
+                                    id="product-details-title"
+                                    className="text-2xl font-bold text-slate-900 sm:text-3xl"
+                                >
+                                    {selectedProduct.name}
+                                </h2>
+                                <p className="mt-2 text-sm font-semibold uppercase tracking-wide text-indigo-700">
+                                    {selectedProduct.category || "Sem categoria"}
+                                </p>
+                            </header>
+                            <div className="flex min-h-0 flex-1 flex-col lg:items-center items-start justify-center overflow-y-auto py-6 text-start">
+                                {selectedProduct.description && (
+                                    <p className="whitespace-pre-wrap break-words text-sm leading-6 text-slate-600 sm:text-base">
+                                        {selectedProduct.description}
+                                    </p>
+                                )}
+                                {showPrices && (
+                                    <p className="mt-5 text-2xl font-bold text-indigo-700">
+                                        {currencyFormatter.format(selectedProduct.price)}
+                                    </p>
+                                )}
+                            </div>
+                            <footer className="flex shrink-0 gap-3 border-t border-slate-200 pt-4">
                             <button
                                 type="button"
                                 onClick={() => {
@@ -512,17 +581,18 @@ export default function Vitrine() {
                                     )
                                     setSelectedProduct(null)
                                 }}
-                                className="mt-4 flex w-full items-center justify-center rounded-lg bg-indigo-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                                className="flex flex-1 items-center justify-center rounded-lg bg-indigo-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
                             >
                                 Adicionar ao carrinho
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setSelectedProduct(null)}
-                                className="mt-2 flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                                className="flex flex-1 items-center justify-center rounded-lg border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600"
                             >
                                 Fechar
                             </button>
+                            </footer>
                         </div>
                     </section>
                 </div>
